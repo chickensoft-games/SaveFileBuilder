@@ -42,6 +42,13 @@ public interface ISaveChunk<TData> where TData : class {
   /// <typeparam name="TDataType">Type of data associated with the child save
   /// chunk.</typeparam>
   TDataType GetChunkSaveData<TDataType>() where TDataType : class;
+
+  /// <summary>
+  /// Loads the data associated with a child save chunk.
+  /// </summary>
+  /// <typeparam name="TDataType">Type of data associated with the child save
+  /// chunk.</typeparam>
+  void LoadChunkSaveData<TDataType>(TDataType data) where TDataType : class;
 }
 
 /// <inheritdoc cref="ISaveChunk{TData}"/>
