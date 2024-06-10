@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chickensoft.SaveFileBuilder", "Chickensoft.SaveFileBuilder\Chickensoft.SaveFileBuilder.csproj", "{B1A8B525-F357-4408-8DEC-DCE510C4C4CA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chickensoft.SaveFileBuilder.Tests", "Chickensoft.SaveFileBuilder.Tests\Chickensoft.SaveFileBuilder.Tests.csproj", "{1C650F6D-5BA9-49FD-9C22-A7756F4A09D4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B1A8B525-F357-4408-8DEC-DCE510C4C4CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1A8B525-F357-4408-8DEC-DCE510C4C4CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1A8B525-F357-4408-8DEC-DCE510C4C4CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1A8B525-F357-4408-8DEC-DCE510C4C4CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C650F6D-5BA9-49FD-9C22-A7756F4A09D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C650F6D-5BA9-49FD-9C22-A7756F4A09D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C650F6D-5BA9-49FD-9C22-A7756F4A09D4}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C650F6D-5BA9-49FD-9C22-A7756F4A09D4}.Release|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+EndGlobal
