@@ -125,6 +125,9 @@ public partial class Player : CharacterBody3D {
 
 Once a save chunk has been added to a parent save chunk, the parent save chunk can access it from the callbacks specified by `onSave` and `onLoad`, querying its data or forcing it load data into its node.
 
+> [!TIP]
+> You can define easily serializable types, as well as serialize entire [LogicBlocks] with [Chickensoft.Serialization].
+
 ---
 
 🐣 Package generated from a 🐤 Chickensoft Template — <https://chickensoft.games>
@@ -140,4 +143,6 @@ Once a save chunk has been added to a parent save chunk, the parent save chunk c
 
 [AutoInject]: https://github.com/chickensoft-games/AutoInject
 [Game Demo]: https://github.com/chickensoft-games/GameDemo
+[LogicBlocks]: https://github.com/chickensoft-games/LogicBlocks
+[Chickensoft.Serialization]: https://github.com/chickensoft-games/Serialization
 [nuget]: https://www.nuget.org/packages/Chickensoft.SaveFileBuilder
