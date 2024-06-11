@@ -11,6 +11,28 @@ using Chickensoft.Collections;
 /// </typeparam>
 public interface ISaveChunk<TData> where TData : class {
   /// <summary>
+  /// <para>
+  /// Callback that returns save data from the scene tree.
+  /// </para>
+  /// <para>
+  /// Only call this directly for testing. Prefer calling
+  /// <see cref="GetSaveData"/> to get the save data.
+  /// </para>
+  /// </summary>
+  public Func<ISaveChunk<TData>, TData> OnSave { get; }
+
+  /// <summary>
+  /// <para>
+  /// Callback that loads the data into the scene tree.
+  /// </para>
+  /// <para>
+  /// Only call this directly for testing. Prefer calling
+  /// <see cref="LoadSaveData"/> to load the save data.
+  /// </para>
+  /// </summary>
+  public Action<ISaveChunk<TData>, TData> OnLoad { get; }
+
+  /// <summary>
   /// Gets the data associated with this save chunk.
   /// </summary>
   /// <returns>Save chunk data.</returns>
@@ -53,8 +75,11 @@ public interface ISaveChunk<TData> where TData : class {
 
 /// <inheritdoc cref="ISaveChunk{TData}"/>
 public sealed class SaveChunk<TData> : ISaveChunk<TData> where TData : class {
-  private readonly Func<SaveChunk<TData>, TData> _onSave;
-  private readonly Action<SaveChunk<TData>, TData> _onLoad;
+  /// <inheritdoc cref="ISaveChunk{TData}.OnSave"/>
+  public Func<ISaveChunk<TData>, TData> OnSave { get; }
+
+  /// <inheritdoc cref="ISaveChunk{TData}.OnLoad"/>
+  public Action<ISaveChunk<TData>, TData> OnLoad { get; }
   private readonly Blackboard _children = new();
 
   /// <summary>
@@ -67,18 +92,18 @@ public sealed class SaveChunk<TData> : ISaveChunk<TData> where TData : class {
   /// with this chunk. Should receive the current chunk and the data as
   /// parameters.</param>
   public SaveChunk(
-    Func<SaveChunk<TData>, TData> onSave,
-    Action<SaveChunk<TData>, TData> onLoad
+    Func<ISaveChunk<TData>, TData> onSave,
+    Action<ISaveChunk<TData>, TData> onLoad
   ) {
-    _onSave = onSave;
-    _onLoad = onLoad;
+    OnSave = onSave;
+    OnLoad = onLoad;
   }
 
   /// <inheritdoc />
-  public TData GetSaveData() => _onSave(this);
+  public TData GetSaveData() => OnSave(this);
 
   /// <inheritdoc />
-  public void LoadSaveData(TData data) => _onLoad(this, data);
+  public void LoadSaveData(TData data) => OnLoad(this, data);
 
   /// <inheritdoc />
   public void AddChunk<TDataType>(ISaveChunk<TDataType> child)
