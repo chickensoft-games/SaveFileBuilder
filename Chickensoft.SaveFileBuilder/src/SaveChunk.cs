@@ -52,6 +52,13 @@ public interface ISaveChunk<TData> where TData : class {
   void AddChunk<TDataType>(ISaveChunk<TDataType> child) where TDataType : class;
 
   /// <summary>
+  /// Adds a child save chunk to or overwrites an existing chunk in this chunk, based on its compile-time type.
+  /// </summary>
+  /// <typeparam name="TDataType">Type of data associated with the child save
+  /// chunk.</typeparam>
+  void OverwriteChunk<TDataType>(ISaveChunk<TDataType> child) where TDataType : class;
+
+  /// <summary>
   /// Gets a child save chunk.
   /// </summary>
   /// <typeparam name="TDataType">Type of data associated with the child save
@@ -108,6 +115,10 @@ public sealed class SaveChunk<TData> : ISaveChunk<TData> where TData : class {
   /// <inheritdoc />
   public void AddChunk<TDataType>(ISaveChunk<TDataType> child)
     where TDataType : class => _children.Set(child);
+
+  /// <inheritdoc />
+  public void OverwriteChunk<TDataType>(ISaveChunk<TDataType> child)
+    where TDataType : class => _children.Overwrite(child);
 
   /// <inheritdoc />
   public ISaveChunk<TDataType> GetChunk<TDataType>() where TDataType : class =>
