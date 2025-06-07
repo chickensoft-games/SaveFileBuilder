@@ -39,7 +39,7 @@
 
   <ItemGroup>
     <!-- Dependencies go here. -->
-    <PackageReference Include="Chickensoft.Collections" Version="1.13.10" />
+    <PackageReference Include="Chickensoft.Collections" Version="1.13.11" />
     <PackageReference Include="IsExternalInit" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
