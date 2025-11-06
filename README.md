@@ -32,19 +32,22 @@ using Chickensoft.SaveFileBuilder;
 using Godot;
 
 [Meta(typeof(IAutoNode))]
-public partial class Game : Node3D {
+public partial class Game : Node3D
+{
   public SaveFile<GameData> SaveFile { get; set; } = default!;
 
   // Provide the root save chunk to all descendant nodes.
   ISaveChunk<GameData> IProvide<ISaveChunk<GameData>>.Value() => SaveFile.Root;
 
-  public void Setup() {
+  public void Setup()
+  {
     SaveFile = new SaveFile<GameData>(
       root: new SaveChunk<GameData>(
         onSave: (chunk) => {
           // Use root chunk to get child chunks that were added to us
           // lower in the scene tree.
-          var gameData = new GameData() {
+          var gameData = new GameData()
+          {
             MapData = chunk.GetChunkSaveData<MapData>(),
             PlayerData = chunk.GetChunkSaveData<PlayerData>(),
             PlayerCameraData = chunk.GetChunkSaveData<PlayerCameraData>()
@@ -52,7 +55,8 @@ public partial class Game : Node3D {
 
           return gameData;
         },
-        onLoad: (chunk, data) => {
+        onLoad: (chunk, data) =>
+        {
           // Break up the game data and send it to the child chunks so that
           // they can load the data into the nodes they belong to.
           chunk.LoadChunkSaveData(data.MapData);
@@ -60,12 +64,14 @@ public partial class Game : Node3D {
           chunk.LoadChunkSaveData(data.PlayerCameraData);
         }
       ),
-      onSave: async (GameData data) => {
+      onSave: async (GameData data) =>
+      {
         // Save the game data to disk.
         var json = JsonSerializer.Serialize(data, JsonOptions);
         await FileSystem.File.WriteAllTextAsync(SaveFilePath, json);
       },
-      onLoad: async () => {
+      onLoad: async () =>
+      {
         // Load the game data from disk.
         if (!FileSystem.File.Exists(SaveFilePath)) {
           GD.Print("No save file to load :'(");
@@ -88,21 +94,25 @@ SaveChunks are smaller pieces of save data that are composed together into the o
 
 ```csharp
 [Meta(typeof(IAutoNode))]
-public partial class Player : CharacterBody3D {
+public partial class Player : CharacterBody3D
+{
   [Dependency]
   public ISaveChunk<GameData> GameChunk => this.DependOn<ISaveChunk<GameData>>();
   public ISaveChunk<PlayerData> PlayerChunk { get; set; } = default!;
 
-  public void Setup() {
+  public void Setup()
+  {
     ...
 
     PlayerChunk = new SaveChunk<PlayerData>(
-      onSave: (chunk) => new PlayerData() {
+      onSave: (chunk) => new PlayerData()
+      {
         GlobalTransform = GlobalTransform,
         StateMachine = (PlayerLogic)PlayerLogic,
         Velocity = Velocity
       },
-      onLoad: (chunk, data) => {
+      onLoad: (chunk, data) =>
+      {
         GlobalTransform = data.GlobalTransform;
         Velocity = data.Velocity;
         PlayerLogic.RestoreFrom(data.StateMachine);
@@ -113,7 +123,8 @@ public partial class Player : CharacterBody3D {
     ...
   }
 
-  public void OnResolved() {
+  public void OnResolved()
+  {
     // Add a child to our parent save chunk (the game chunk) so that it can
     // look up the player chunk when loading and saving the game.
     GameChunk.AddChunk(PlayerChunk);
