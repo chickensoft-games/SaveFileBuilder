@@ -9,7 +9,8 @@ using Chickensoft.Collections;
 /// </summary>
 /// <typeparam name="TData">Type of data associated with this save chunk.
 /// </typeparam>
-public interface ISaveChunk<TData> where TData : class {
+public interface ISaveChunk<TData> where TData : class
+{
   /// <summary>
   /// <para>
   /// Callback that returns save data from the scene tree.
@@ -19,7 +20,7 @@ public interface ISaveChunk<TData> where TData : class {
   /// <see cref="GetSaveData"/> to get the save data.
   /// </para>
   /// </summary>
-  public Func<ISaveChunk<TData>, TData> OnSave { get; }
+  Func<ISaveChunk<TData>, TData> OnSave { get; }
 
   /// <summary>
   /// <para>
@@ -30,7 +31,7 @@ public interface ISaveChunk<TData> where TData : class {
   /// <see cref="LoadSaveData"/> to load the save data.
   /// </para>
   /// </summary>
-  public Action<ISaveChunk<TData>, TData> OnLoad { get; }
+  Action<ISaveChunk<TData>, TData> OnLoad { get; }
 
   /// <summary>
   /// Gets the data associated with this save chunk.
@@ -81,7 +82,8 @@ public interface ISaveChunk<TData> where TData : class {
 }
 
 /// <inheritdoc cref="ISaveChunk{TData}"/>
-public sealed class SaveChunk<TData> : ISaveChunk<TData> where TData : class {
+public sealed class SaveChunk<TData> : ISaveChunk<TData> where TData : class
+{
   /// <inheritdoc cref="ISaveChunk{TData}.OnSave"/>
   public Func<ISaveChunk<TData>, TData> OnSave { get; }
 
@@ -101,7 +103,8 @@ public sealed class SaveChunk<TData> : ISaveChunk<TData> where TData : class {
   public SaveChunk(
     Func<ISaveChunk<TData>, TData> onSave,
     Action<ISaveChunk<TData>, TData> onLoad
-  ) {
+  )
+  {
     OnSave = onSave;
     OnLoad = onLoad;
   }

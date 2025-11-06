@@ -5,11 +5,13 @@ using Chickensoft.GoDotTest;
 using Godot;
 using Shouldly;
 
-public class SaveFileTest(Node testScene) : TestClass(testScene) {
+public class SaveFileTest(Node testScene) : TestClass(testScene)
+{
   private sealed record SaveData { }
 
   [Test]
-  public async Task SavesAndLoads() {
+  public async Task SavesAndLoads()
+  {
     var onSave = Task.CompletedTask;
     var data = new SaveData();
 
@@ -22,14 +24,16 @@ public class SaveFileTest(Node testScene) : TestClass(testScene) {
       onLoad: () => Task.FromResult<SaveData?>(data)
     );
 
-    await Should.NotThrowAsync(async () => {
+    await Should.NotThrowAsync(async () =>
+    {
       await saveFile.Load();
       await saveFile.Save();
     });
   }
 
   [Test]
-  public async Task DoesNotLoadIfNull() {
+  public async Task DoesNotLoadIfNull()
+  {
     var onSave = Task.CompletedTask;
     var data = new SaveData();
 

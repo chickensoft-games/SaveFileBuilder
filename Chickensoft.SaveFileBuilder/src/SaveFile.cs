@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 /// </summary>
 /// <typeparam name="TData">Type of data represented by the save file.
 /// </typeparam>
-public interface ISaveFile<TData> where TData : class {
+public interface ISaveFile<TData> where TData : class
+{
   /// <summary>
   /// Callback that saves the data to the save file.
   /// </summary>
@@ -39,7 +40,8 @@ public interface ISaveFile<TData> where TData : class {
 }
 
 /// <inheritdoc cref="ISaveFile{TData}"/>
-public class SaveFile<TData> : ISaveFile<TData> where TData : class {
+public class SaveFile<TData> : ISaveFile<TData> where TData : class
+{
   /// <inheritdoc cref="ISaveFile{TData}.Root"/>
   public ISaveChunk<TData> Root { get; }
 
@@ -59,7 +61,8 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class {
     ISaveChunk<TData> root,
     Func<TData, Task> onSave,
     Func<Task<TData?>> onLoad
-  ) {
+  )
+  {
     Root = root;
     OnSave = onSave;
     OnLoad = onLoad;
@@ -69,12 +72,14 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class {
   public Task Save() => OnSave(Root.GetSaveData());
 
   /// <inheritdoc cref="ISaveFile{TData}.Load"/>
-  public async Task Load() {
+  public async Task Load()
+  {
     // Loading save data is asynchronous since it's usually coming from
     // the disk or network.
     var data = await OnLoad();
 
-    if (data is null) {
+    if (data is null)
+    {
       return;
     }
 
