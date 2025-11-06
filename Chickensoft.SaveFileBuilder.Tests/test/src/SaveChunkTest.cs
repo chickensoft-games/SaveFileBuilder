@@ -5,11 +5,13 @@ using Chickensoft.GoDotTest;
 using Godot;
 using Shouldly;
 
-public class SaveChunkTest(Node testScene) : TestClass(testScene) {
+public class SaveChunkTest(Node testScene) : TestClass(testScene)
+{
   private sealed record SaveData { }
 
   [Test]
-  public void SavesAndLoads() {
+  public void SavesAndLoads()
+  {
     var onSave = Task.CompletedTask;
     var data = new SaveData();
 
@@ -28,7 +30,8 @@ public class SaveChunkTest(Node testScene) : TestClass(testScene) {
   }
 
   [Test]
-  public void AddsAndGetsChunk() {
+  public void AddsAndGetsChunk()
+  {
     var onSave = Task.CompletedTask;
     var data = new SaveData();
 
@@ -56,7 +59,8 @@ public class SaveChunkTest(Node testScene) : TestClass(testScene) {
   }
 
   [Test]
-  public void OverwritesAndGetsChunk() {
+  public void OverwritesAndGetsChunk()
+  {
     var onSave = Task.CompletedTask;
     var data = new SaveData();
 
