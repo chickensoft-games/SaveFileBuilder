@@ -48,7 +48,7 @@ public interface ISaveFile<TData> where TData : class
 
 public static class SaveFile
 {
-  public static SaveFile<TData> CreateGzipJsonFile<TData>(SaveChunk<TData> root, string filePath, JsonSerializerOptions? options = null) where TData : class => new(
+  public static SaveFile<TData> CreateGzipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
     io: new FileIO(filePath),
     serializer: new JsonStreamSerializer(options),
