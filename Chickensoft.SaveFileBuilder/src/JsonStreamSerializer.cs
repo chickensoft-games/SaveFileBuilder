@@ -43,8 +43,8 @@ public class JsonStreamSerializer : IStreamSerializer, IAsyncStreamSerializer
   /// <summary>Initializes a new instance of the <see cref="JsonStreamSerializer"/> class.</summary>
   /// <param name="options">Options to control serialization behavior.</param>
 #if NET8_0_OR_GREATER
-        [RequiresUnreferencedCode("Use the overload that takes a JsonTypeInfo or JsonSerializerContext, or make sure all of the required types are preserved.")]
-        [RequiresDynamicCode("Use System.Text.Json source generation for native AOT applications.")]
+  [RequiresUnreferencedCode("Use the overload that takes a JsonTypeInfo or JsonSerializerContext, or make sure all of the required types are preserved.")]
+  [RequiresDynamicCode("Use System.Text.Json source generation for native AOT applications.")]
 #endif
   public JsonStreamSerializer(JsonSerializerOptions? options = null)
   {

@@ -7,53 +7,53 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-/// <summary>
-/// Represents a save file composed of one or more save chunks.
-/// </summary>
-/// <typeparam name="TData">Type of data represented by the save file.
-/// </typeparam>
+/// <summary>Represents a save file composed of one or more save chunks.</summary>
+/// <typeparam name="TData">Type of data represented by the save file.</typeparam>
 public interface ISaveFile<TData> where TData : class
 {
-  /// <summary>
-  /// Root save chunk from which the save file contents are composed.
-  /// </summary>
+  /// <summary>Root save chunk from which the save file contents are composed.</summary>
   ISaveChunk<TData> Root { get; }
 
+  /// <summary>Gets a value indicating whether the content can be saved using a synchronous operation.</summary>
+  /// <remarks>If <see langword="false"/>, attempts to save synchronously may not be supported and could result in an exception or undefined behavior. Check this property before invoking synchronous save methods to ensure compatibility.</remarks>
   bool CanSaveSynchronously { get; }
 
+  /// <returns></returns>
+  /// <inheritdoc cref="SaveAsync(CompressionLevel, CancellationToken)" />
   void Save(CompressionLevel compressionLevel = default);
 
+  /// <returns></returns>
+  /// <inheritdoc cref="LoadAsync(CancellationToken)" />
   void Load();
 
+  /// <returns><see langword="true"/> if the save file exists; otherwise, <see langword="false"/>.</returns>
+  /// <inheritdoc cref="ExistsAsync(CancellationToken)" />
   bool Exists();
 
+  /// <returns></returns>
+  /// <inheritdoc cref="DeleteAsync(CancellationToken)" />
   void Delete();
 
-  /// <summary>
-  /// Collects save data from the save file chunk tree and saves it.
-  /// </summary>
-  /// <returns>Asynchronous task.</returns>
+  /// <summary>Collects save data from the <see cref="Root"/> chunk tree and saves it.</summary>
+  /// <param name="compressionLevel">Compression level whether to emphasize speed or efficiency when compressing.</param>
+  /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous save operation.</param>
+  /// <returns>A task that represents the asynchronous save operation.</returns>
   ValueTask SaveAsync(CompressionLevel compressionLevel = default, CancellationToken cancellationToken = default);
 
-  /// <summary>
-  /// Loads save data and restores the save file chunk tree.
-  /// </summary>
-  /// <returns>Asynchronous task.</returns>
+  /// <summary>Loads save data and restores the <see cref="Root"/> chunk tree.</summary>
+  /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous load operation.</param>
+  /// <returns>A task that represents the asynchronous load operation.</returns>
   ValueTask LoadAsync(CancellationToken cancellationToken = default);
 
+  /// <summary>Determines whether the save file exists.</summary>
+  /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous exists operation.</param>
+  /// <returns>A task that represents the asynchronous exists operation. The value of the task is <see langword="true"/> if the save file exists; otherwise, <see langword="false"/>.</returns>
   ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default);
 
+  /// <summary>Deletes the save file.</summary>
+  /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous delete operation.</param>
+  /// <returns>A task that represents the asynchronous delete operation. The value of the task is <see langword="true"/> if the io source was deleted; otherwise, <see langword="false"/>.</returns>
   ValueTask<bool> DeleteAsync(CancellationToken cancellationToken = default);
-}
-
-public static class SaveFile
-{
-  public static SaveFile<TData> CreateGzipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonSerializerOptions? options = null) where TData : class => new(
-    root: root,
-    io: new FileIO(filePath),
-    serializer: new JsonStreamSerializer(options),
-    compression: new GZipCompression()
-  );
 }
 
 /// <inheritdoc cref="ISaveFile{TData}"/>
@@ -62,6 +62,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   /// <inheritdoc cref="ISaveFile{TData}.Root"/>
   public ISaveChunk<TData> Root { get; }
 
+  /// <inheritdoc />
 #if NET5_0_OR_GREATER
   [System.Diagnostics.CodeAnalysisMemberNotNullWhen(true, nameof(_io), nameof(_serializer))]
 #endif
@@ -74,21 +75,22 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   private readonly IAsyncIOStreamProvider? _asyncIO;
   private readonly IStreamSerializer? _serializer;
   private readonly IAsyncStreamSerializer? _asyncSerializer;
-  private readonly ICompressionStreamProvider? _compression;
+  private readonly ICompressionStreamProvider? _compressor;
 
   /// <inheritdoc cref="ISaveFile{TData}"/>
-  /// <param name="root">
-  /// <inheritdoc cref="ISaveFile{TData}.Root" path="/summary" />
-  /// </param>
-  /// <param name="onSave">Function that saves the data.</param>
-  /// <param name="onLoad">Function that loads the data.</param>
+  /// <param name="root"><inheritdoc cref="ISaveFile{TData}.Root" path="/summary" /></param>
+  /// <param name="io">Input/output source which the save file reads from and writes to.</param>
+  /// <param name="asyncIO">Input/output source which the save file reads from and writes to asynchronously.</param>
+  /// <param name="serializer">Serializer which the save file uses to serialize and deserialize data.</param>
+  /// <param name="asyncSerializer">Serializer which the save file uses to serialize and deserialize data asynchronously.</param>
+  /// <param name="compressor">Compressor which the save file uses to compress and decompress data.</param>
   private SaveFile(
     ISaveChunk<TData> root,
     IIOStreamProvider? io,
     IAsyncIOStreamProvider? asyncIO,
     IStreamSerializer? serializer,
     IAsyncStreamSerializer? asyncSerializer,
-    ICompressionStreamProvider? compression
+    ICompressionStreamProvider? compressor
   )
   {
     Root = root;
@@ -96,41 +98,46 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     _asyncIO = asyncIO;
     _serializer = serializer;
     _asyncSerializer = asyncSerializer;
-    _compression = compression;
+    _compressor = compressor;
   }
 
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
   public SaveFile(
     ISaveChunk<TData> root,
     IIOStreamProvider io,
     IStreamSerializer serializer,
-    ICompressionStreamProvider? compression = null
-  ) : this(root, io, io as IAsyncIOStreamProvider, serializer, serializer as IAsyncStreamSerializer, compression)
+    ICompressionStreamProvider? compressor = null
+  ) : this(root, io, io as IAsyncIOStreamProvider, serializer, serializer as IAsyncStreamSerializer, compressor)
   { }
 
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
   public SaveFile(
     ISaveChunk<TData> root,
     IIOStreamProvider io,
     IAsyncStreamSerializer asyncSerializer,
-    ICompressionStreamProvider? compression = null
-  ) : this(root, io, io as IAsyncIOStreamProvider, asyncSerializer as IStreamSerializer, asyncSerializer, compression)
+    ICompressionStreamProvider? compressor = null
+  ) : this(root, io, io as IAsyncIOStreamProvider, asyncSerializer as IStreamSerializer, asyncSerializer, compressor)
   { }
 
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
   public SaveFile(
     ISaveChunk<TData> root,
     IAsyncIOStreamProvider asyncIO,
     IStreamSerializer serializer,
-    ICompressionStreamProvider? compression = null
-  ) : this(root, asyncIO as IIOStreamProvider, asyncIO, serializer, serializer as IAsyncStreamSerializer, compression)
+    ICompressionStreamProvider? compressor = null
+  ) : this(root, asyncIO as IIOStreamProvider, asyncIO, serializer, serializer as IAsyncStreamSerializer, compressor)
   { }
 
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
   public SaveFile(
     ISaveChunk<TData> root,
     IAsyncIOStreamProvider asyncIO,
     IAsyncStreamSerializer asyncSerializer,
-    ICompressionStreamProvider? compression = null
-  ) : this(root, asyncIO as IIOStreamProvider, asyncIO, asyncSerializer as IStreamSerializer, asyncSerializer, compression)
+    ICompressionStreamProvider? compressor = null
+  ) : this(root, asyncIO as IIOStreamProvider, asyncIO, asyncSerializer as IStreamSerializer, asyncSerializer, compressor)
   { }
 
+  /// <inheritdoc />
   public void Save(CompressionLevel compressionLevel = default)
   {
     if (!CanSaveSynchronously)
@@ -138,11 +145,12 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
       throw SynchronousOperationNotAllowedException();
     }
 
-    using var ioStream = _io.Write();
-    using var compressionStream = _compression?.CompressionStream(ioStream, compressionLevel);
-    _serializer.Serialize(compressionStream ?? ioStream, Root.GetSaveData());
+    using var ioStream = _io!.Write();
+    using var compressionStream = _compressor?.CompressionStream(ioStream, compressionLevel);
+    _serializer!.Serialize(compressionStream ?? ioStream, Root.GetSaveData());
   }
 
+  /// <inheritdoc />
   public void Load()
   {
     if (!CanSaveSynchronously)
@@ -150,9 +158,9 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
       throw SynchronousOperationNotAllowedException();
     }
 
-    using var ioStream = _io.Read();
-    using var decompressionStream = _compression?.DecompressionStream(ioStream);
-    var data = _serializer.Deserialize<TData>(decompressionStream ?? ioStream);
+    using var ioStream = _io!.Read();
+    using var decompressionStream = _compressor?.DecompressionStream(ioStream);
+    var data = _serializer!.Deserialize<TData>(decompressionStream ?? ioStream);
     if (data is null)
     {
       return;
@@ -161,8 +169,10 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     Root.LoadSaveData(data);
   }
 
+  /// <inheritdoc />
   public bool Exists() => _io is not null ? _io.Exists() : throw SynchronousOperationNotAllowedException();
 
+  /// <inheritdoc />
   public void Delete()
   {
     if (_io is null)
@@ -173,13 +183,14 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     _io.Delete();
   }
 
+  /// <inheritdoc />
   public async ValueTask SaveAsync(CompressionLevel compressionLevel = default, CancellationToken cancellationToken = default)
   {
     await using var ioStream = _asyncIO is not null
       ? new MemoryStream()
       : _io!.Write();
 
-    await using var compressionStream = _compression?.CompressionStream(ioStream, compressionLevel);
+    await using var compressionStream = _compressor?.CompressionStream(ioStream, compressionLevel);
 
     if (_asyncSerializer is not null)
     {
@@ -196,13 +207,14 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     }
   }
 
+  /// <inheritdoc />
   public async ValueTask LoadAsync(CancellationToken cancellationToken = default)
   {
     await using var ioStream = _asyncIO is not null
       ? await _asyncIO.ReadAsync(cancellationToken).ConfigureAwait(false)
       : _io!.Read();
 
-    await using var decompressionStream = _compression?.DecompressionStream(ioStream);
+    await using var decompressionStream = _compressor?.DecompressionStream(ioStream);
 
     var data = _asyncSerializer is not null
       ? await _asyncSerializer.DeserializeAsync<TData>(decompressionStream ?? ioStream, cancellationToken).ConfigureAwait(false)
@@ -216,6 +228,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     Root.LoadSaveData(data);
   }
 
+  /// <inheritdoc />
   public async ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default)
   {
     if (_asyncIO is not null)
@@ -226,6 +239,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     return _io!.Exists();
   }
 
+  /// <inheritdoc />
   public async ValueTask<bool> DeleteAsync(CancellationToken cancellationToken = default)
   {
     if (_asyncIO is not null)
@@ -236,4 +250,16 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     _io!.Delete();
     return true;
   }
+}
+
+/// <summary>Provides factory methods for creating common save file configurations.</summary>
+public static class SaveFile
+{
+  /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses JSON serialization and GZip compression.</summary>
+  public static SaveFile<TData> CreateGzipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonSerializerOptions? options = null) where TData : class => new(
+    root: root,
+    io: new FileIO(filePath),
+    serializer: new JsonStreamSerializer(options),
+    compressor: new GZipCompression()
+  );
 }
