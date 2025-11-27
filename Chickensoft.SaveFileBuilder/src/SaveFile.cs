@@ -4,6 +4,8 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -69,7 +71,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   public bool CanSaveSynchronously => _io is not null && _serializer is not null;
 
   private static InvalidOperationException SynchronousOperationNotAllowedException()
-    => new("Synchronous operation is not allowed because required IO and serializer providers are not available.");
+    => new($"Synchronous operation is not allowed because either the {nameof(IIOStreamProvider)} or the {nameof(IStreamSerializer)} of the {nameof(SaveFile<>)} is null.");
 
   private readonly IIOStreamProvider? _io;
   private readonly IAsyncIOStreamProvider? _asyncIO;
@@ -260,6 +262,22 @@ public static class SaveFile
     root: root,
     io: new FileIO(filePath),
     serializer: new JsonStreamSerializer(options),
+    compressor: new GZipCompression()
+  );
+
+  /// <inheritdoc cref="CreateGzipJsonFile{TData}(ISaveChunk{TData}, string, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGzipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonSerializerContext context) where TData : class => new(
+    root: root,
+    io: new FileIO(filePath),
+    serializer: new JsonStreamSerializer(context),
+    compressor: new GZipCompression()
+  );
+
+  /// <inheritdoc cref="CreateGzipJsonFile{TData}(ISaveChunk{TData}, string, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGzipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonTypeInfo jsonTypeInfo) where TData : class => new(
+    root: root,
+    io: new FileIO(filePath),
+    serializer: new JsonStreamSerializer(jsonTypeInfo),
     compressor: new GZipCompression()
   );
 }
