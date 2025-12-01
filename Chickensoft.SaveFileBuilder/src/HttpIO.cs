@@ -35,7 +35,10 @@ public class HttpIO : IAsyncIOStreamProvider, IDisposable
 
   private readonly HttpClient _httpClient;
   private readonly bool _disposeClient;
-  private readonly HttpContent _emptyContent = new ByteArrayContent([]);
+  private readonly HttpContent _emptyContent = new ByteArrayContent([])
+  {
+    Headers = { ContentLength = null }
+  };
 
   public HttpIORequestUris RequestUris { get; init; }
 
