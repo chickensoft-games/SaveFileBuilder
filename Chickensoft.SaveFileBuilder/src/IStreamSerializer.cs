@@ -42,7 +42,7 @@ public static class IStreamSerializerExtensions
 
   /// <inheritdoc cref="IStreamSerializer.Deserialize(Stream, Type)" />
   /// <typeparam name="TValue">The type of the object to deserialize.</typeparam>
-  public static TValue? Deserialize<TValue>(this IStreamSerializer serializer, Stream stream) => (TValue?)serializer.Deserialize(stream, typeof(TValue))!;
+  public static TValue? Deserialize<TValue>(this IStreamSerializer serializer, Stream stream) => (TValue?)serializer.Deserialize(stream, typeof(TValue));
 
   /// <inheritdoc cref="IAsyncStreamSerializer.SerializeAsync(Stream, object?, Type, CancellationToken)" />
   /// <typeparam name="TValue">The type of the object to serialize.</typeparam>
@@ -50,5 +50,5 @@ public static class IStreamSerializerExtensions
 
   /// <inheritdoc cref="IAsyncStreamSerializer.DeserializeAsync(Stream, Type, CancellationToken)" />
   /// <typeparam name="TValue">The type of the object to deserialize.</typeparam>
-  public static async ValueTask<TValue?> DeserializeAsync<TValue>(this IAsyncStreamSerializer serializer, Stream stream, CancellationToken cancellationToken = default) => (TValue?)(await serializer.DeserializeAsync(stream, typeof(TValue), cancellationToken))!;
+  public static async ValueTask<TValue?> DeserializeAsync<TValue>(this IAsyncStreamSerializer serializer, Stream stream, CancellationToken cancellationToken = default) => (TValue?)await serializer.DeserializeAsync(stream, typeof(TValue), cancellationToken);
 }
