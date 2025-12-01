@@ -196,7 +196,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
 
     if (_asyncSerializer is not null)
     {
-      await _asyncSerializer.SerializeAsync(compressionStream ?? ioStream, Root.GetSaveData(), cancellationToken).ConfigureAwait(false);
+      await _asyncSerializer.SerializeAsync(compressionStream ?? ioStream, Root.GetSaveData(), cancellationToken);
     }
     else
     {
@@ -205,7 +205,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
 
     if (_asyncIO is not null)
     {
-      await _asyncIO.WriteAsync(compressionStream ?? ioStream, cancellationToken).ConfigureAwait(false);
+      await _asyncIO.WriteAsync(ioStream, cancellationToken);
     }
   }
 
@@ -213,13 +213,13 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   public async ValueTask LoadAsync(CancellationToken cancellationToken = default)
   {
     await using var ioStream = _asyncIO is not null
-      ? await _asyncIO.ReadAsync(cancellationToken).ConfigureAwait(false)
+      ? await _asyncIO.ReadAsync(cancellationToken)
       : _io!.Read();
 
     await using var decompressionStream = _compressor?.DecompressionStream(ioStream);
 
     var data = _asyncSerializer is not null
-      ? await _asyncSerializer.DeserializeAsync<TData>(decompressionStream ?? ioStream, cancellationToken).ConfigureAwait(false)
+      ? await _asyncSerializer.DeserializeAsync<TData>(decompressionStream ?? ioStream, cancellationToken)
       : _serializer!.Deserialize<TData>(decompressionStream ?? ioStream);
 
     if (data is null)
@@ -235,7 +235,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   {
     if (_asyncIO is not null)
     {
-      return await _asyncIO.ExistsAsync(cancellationToken).ConfigureAwait(false);
+      return await _asyncIO.ExistsAsync(cancellationToken);
     }
 
     return _io!.Exists();
@@ -246,7 +246,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   {
     if (_asyncIO is not null)
     {
-      return await _asyncIO.DeleteAsync(cancellationToken).ConfigureAwait(false);
+      return await _asyncIO.DeleteAsync(cancellationToken);
     }
 
     _io!.Delete();

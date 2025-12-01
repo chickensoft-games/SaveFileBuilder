@@ -77,7 +77,7 @@ public class HttpIO : IAsyncIOStreamProvider, IDisposable
 
   public async Task<Stream> ReadAsync(CancellationToken cancellationToken = default)
   {
-    using var response = await _httpClient.GetAsync(RequestUris.ReadUri, cancellationToken).ConfigureAwait(false);
+    using var response = await _httpClient.GetAsync(RequestUris.ReadUri, cancellationToken);
 
     try
     {
@@ -88,17 +88,13 @@ public class HttpIO : IAsyncIOStreamProvider, IDisposable
     {
       return new MemoryStream();
     }
-    catch
-    {
-      throw;
-    }
 
-    await using var contentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+    await using var contentStream = await response.Content.ReadAsStreamAsync();
 
-    var memoryStream = new MemoryStream();
-    await contentStream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
-    memoryStream.Position = 0;
-    return memoryStream;
+    var readStream = new MemoryStream();
+    await contentStream.CopyToAsync(readStream, cancellationToken);
+    readStream.Position = 0;
+    return readStream;
   }
 
   public async Task WriteAsync(Stream stream, CancellationToken cancellationToken = default)
@@ -119,18 +115,18 @@ public class HttpIO : IAsyncIOStreamProvider, IDisposable
       content.Headers.Add(header.Key, header.Value);
     }
 
-    await _httpClient.PostAsync(RequestUris.WriteUri, content, cancellationToken).ConfigureAwait(false);
+    await _httpClient.PostAsync(RequestUris.WriteUri, content, cancellationToken);
   }
 
   public async Task<bool> ExistsAsync(CancellationToken cancellationToken = default)
   {
-    using var response = await _httpClient.GetAsync(RequestUris.ExistsUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+    using var response = await _httpClient.GetAsync(RequestUris.ExistsUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
     return response.IsSuccessStatusCode;
   }
 
   public async Task<bool> DeleteAsync(CancellationToken cancellationToken = default)
   {
-    using var response = await _httpClient.DeleteAsync(RequestUris.DeleteUri, cancellationToken).ConfigureAwait(false);
+    using var response = await _httpClient.DeleteAsync(RequestUris.DeleteUri, cancellationToken);
     return response.IsSuccessStatusCode;
   }
 
