@@ -1,4 +1,4 @@
-namespace Chickensoft.SaveFileBuilder;
+namespace Chickensoft.SaveFileBuilder.IO;
 
 using System;
 using System.IO;

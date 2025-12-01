@@ -8,6 +8,9 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
+using Chickensoft.SaveFileBuilder.Compression;
+using Chickensoft.SaveFileBuilder.IO;
+using Chickensoft.SaveFileBuilder.Serialization;
 
 /// <summary>Represents a save file composed of one or more save chunks.</summary>
 /// <typeparam name="TData">Type of data represented by the save file.</typeparam>
