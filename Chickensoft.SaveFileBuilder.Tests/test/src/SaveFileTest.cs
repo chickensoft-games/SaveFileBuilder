@@ -1,50 +1,198 @@
 namespace Chickensoft.SaveFileBuilder.Tests;
 
-using System.Threading.Tasks;
-using Chickensoft.GoDotTest;
-using Godot;
+using System.IO.Compression;
+using Chickensoft.SaveFileBuilder.Compression;
+using Chickensoft.SaveFileBuilder.IO;
+using Chickensoft.SaveFileBuilder.Serialization;
 
-public class SaveFileTest(Node testScene) : TestClass(testScene)
+public class SaveFileTest
 {
-  private sealed record SaveData { }
+  public Mock<IIOStreamProvider> MockIO { get; set; }
+  public Mock<IStreamSerializer> MockSerializer { get; set; }
+  public Mock<ICompressionStreamProvider> MockCompresser { get; set; }
 
-  [Test]
-  public async Task SavesAndLoads()
+  public Mock<ISaveChunk<string>> MockChunk { get; set; }
+
+  public SaveFile<string> SaveFile { get; set; }
+
+  public SaveFileTest()
   {
-    //var onSave = Task.CompletedTask;
-    //var data = new SaveData();
+    MockIO = new Mock<IIOStreamProvider>();
+    MockSerializer = new Mock<IStreamSerializer>();
+    MockCompresser = new Mock<ICompressionStreamProvider>();
 
-    //var saveFile = new SaveFile<SaveData>(
-    //  root: new SaveChunk<SaveData>(
-    //    onSave: (chunk) => new SaveData(),
-    //    onLoad: (chunk, data) => { }
-    //  ),
-    //  onSave: _ => onSave,
-    //  onLoad: () => Task.FromResult<SaveData?>(data)
-    //);
+    MockChunk = new Mock<ISaveChunk<string>>();
 
-    //await Should.NotThrowAsync(async () =>
-    //{
-    //  await saveFile.Load();
-    //  await saveFile.Save();
-    //});
+    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, MockCompresser.Object);
   }
 
-  [Test]
-  public async Task DoesNotLoadIfNull()
+  [Fact]
+  public void CanSaveSynchronously_IsTrue() => Assert.True(SaveFile.CanSaveSynchronously);
+
+  [Fact]
+  public void Save_WritesCompressesAndSerializes()
   {
-    //var onSave = Task.CompletedTask;
-    //var data = new SaveData();
+    // Arrange
+    var io = new MemoryStream();
+    var compressionStream = new MemoryStream();
 
-    //var saveFile = new SaveFile<SaveData>(
-    //  root: new SaveChunk<SaveData>(
-    //    onSave: (chunk) => new SaveData(),
-    //    onLoad: (chunk, data) => { }
-    //  ),
-    //  onSave: _ => onSave,
-    //  onLoad: () => Task.FromResult<SaveData?>(null)
-    //);
+    MockChunk.Setup(chunk => chunk.GetSaveData()).Returns("test").Verifiable();
+    MockIO.Setup(io => io.Write()).Returns(io).Verifiable();
+    MockCompresser.Setup(compresser => compresser.CompressionStream(io)).Returns(compressionStream).Verifiable();
+    MockSerializer.Setup(serializer => serializer.Serialize(compressionStream, "test", typeof(string))).Verifiable();
 
-    //await Should.NotThrowAsync(saveFile.Load);
+    // Act
+    SaveFile.Save();
+
+    // Assert
+    MockChunk.Verify();
+    MockIO.Verify();
+    MockCompresser.Verify();
+    MockSerializer.Verify();
+  }
+
+  [Fact]
+  public void Save_CompressorIsNull_WritesAndSerializesWithoutCompressing()
+  {
+    // Arrange
+    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, null);
+
+    var ioStream = new MemoryStream();
+    MockChunk.Setup(chunk => chunk.GetSaveData()).Returns("test").Verifiable();
+    MockIO.Setup(io => io.Write()).Returns(ioStream).Verifiable();
+    MockSerializer.Setup(serializer => serializer.Serialize(ioStream, "test", typeof(string))).Verifiable();
+
+    // Act
+    SaveFile.Save();
+
+    // Assert
+    MockChunk.Verify();
+    MockIO.Verify();
+    MockSerializer.Verify();
+  }
+
+  [Fact]
+  public void Save_CompressionLevel_UsedByCompressor()
+  {
+    // Arrange
+    MockCompresser.Setup(compressor => compressor.CompressionStream(It.IsAny<Stream>(), CompressionLevel.Fastest)).Verifiable();
+
+    // Act
+    SaveFile.Save(CompressionLevel.Fastest);
+
+    // Assert
+    MockCompresser.Verify();
+  }
+
+  [Fact]
+  public void Load_ReadsDecompressesAndDeserializes()
+  {
+    // Arrange
+    var ioStream = new MemoryStream();
+    var compressionStream = new MemoryStream();
+
+    MockIO.Setup(io => io.Read()).Returns(ioStream).Verifiable();
+    MockCompresser.Setup(compresser => compresser.DecompressionStream(ioStream)).Returns(compressionStream).Verifiable();
+    MockSerializer.Setup(serializer => serializer.Deserialize(compressionStream, typeof(string))).Returns("test").Verifiable();
+    MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
+
+    // Act
+    SaveFile.Load();
+
+    // Assert
+    MockIO.Verify();
+    MockCompresser.Verify();
+    MockSerializer.Verify();
+    MockChunk.Verify();
+  }
+
+  [Fact]
+  public void Load_CompressorIsNull_ReadsAndDeserializesWithoutDecompressing()
+  {
+    // Arrange
+    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, null);
+
+    var ioStream = new MemoryStream();
+    MockIO.Setup(io => io.Read()).Returns(ioStream).Verifiable();
+    MockSerializer.Setup(serializer => serializer.Deserialize(ioStream, typeof(string))).Returns("test").Verifiable();
+    MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
+
+    // Act
+    SaveFile.Load();
+
+    // Assert
+    MockIO.Verify();
+    MockSerializer.Verify();
+    MockChunk.Verify();
+  }
+
+  [Fact]
+  public void Load_DataIsNull_DoesNotSetChunkData()
+  {
+    // Arrange
+    MockSerializer.Setup(serializer => serializer.Deserialize(It.IsAny<Stream>(), It.IsAny<Type>())).Returns((string?)null).Verifiable();
+    MockChunk.Setup(chunk => chunk.LoadSaveData(It.IsAny<string>())).Verifiable(Times.Never);
+
+    // Act
+    SaveFile.Load();
+
+    // Assert
+    MockSerializer.Verify();
+    MockChunk.Verify();
+  }
+
+  [Fact]
+  public void Exists_ReturnsIOExists()
+  {
+    // Arrange
+    MockIO.Setup(io => io.Exists()).Returns(true).Verifiable();
+
+    // Act
+    var result = SaveFile.Exists();
+
+    // Assert
+    MockIO.Verify();
+    Assert.True(result);
+  }
+
+  [Fact]
+  public void Delete_CallsIODelete()
+  {
+    // Arrange
+    MockIO.Setup(io => io.Delete()).Verifiable();
+
+    // Act
+    SaveFile.Delete();
+
+    // Assert
+    MockIO.Verify();
+  }
+
+  [Fact]
+  public void SaveAsync_CompletedSynchronously()
+  {
+    var task = SaveFile.SaveAsync(cancellationToken: TestContext.Current.CancellationToken);
+    Assert.True(task.IsCompletedSuccessfully);
+  }
+
+  [Fact]
+  public void LoadAsync_CompletedSynchronously()
+  {
+    var task = SaveFile.LoadAsync(TestContext.Current.CancellationToken);
+    Assert.True(task.IsCompletedSuccessfully);
+  }
+
+  [Fact]
+  public void ExistsAsync_CompletedSynchronously()
+  {
+    var task = SaveFile.ExistsAsync(TestContext.Current.CancellationToken);
+    Assert.True(task.IsCompletedSuccessfully);
+  }
+
+  [Fact]
+  public void DeleteAsync_CompletedSynchronously()
+  {
+    var task = SaveFile.DeleteAsync(TestContext.Current.CancellationToken);
+    Assert.True(task.IsCompletedSuccessfully);
   }
 }
