@@ -3,21 +3,21 @@ namespace Chickensoft.SaveFileBuilder.IO;
 using System.IO;
 
 /// <summary>Provides a read- and write <see cref="Stream"/> from a file.</summary>
-public class FileIO : IIOStreamProvider
+public class FileStreamIO : IStreamIO
 {
   /// <summary>The <see cref="System.IO.FileInfo"/> of the file.</summary>
   public FileInfo FileInfo { get; }
 
-  /// <summary>Initializes a new instance of the <see cref="FileIO"/> class.</summary>
+  /// <summary>Initializes a new instance of the <see cref="FileStreamIO"/> class.</summary>
   /// <param name="fileInfo">The <see cref="System.IO.FileInfo"/> of the file.</param>
-  public FileIO(FileInfo fileInfo)
+  public FileStreamIO(FileInfo fileInfo)
   {
     FileInfo = fileInfo;
   }
 
-  /// <summary>Initializes a new instance of the <see cref="FileIO"/> class.</summary>
+  /// <summary>Initializes a new instance of the <see cref="FileStreamIO"/> class.</summary>
   /// <param name="fileName">The filename of the file.</param>
-  public FileIO(string fileName)
+  public FileStreamIO(string fileName)
   {
     FileInfo = new FileInfo(fileName);
   }

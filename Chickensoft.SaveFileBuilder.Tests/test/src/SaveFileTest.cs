@@ -7,9 +7,9 @@ using Chickensoft.SaveFileBuilder.Serialization;
 
 public class SaveFileTest
 {
-  public Mock<IIOStreamProvider> MockIO { get; set; }
+  public Mock<IStreamIO> MockIO { get; set; }
   public Mock<IStreamSerializer> MockSerializer { get; set; }
-  public Mock<ICompressionStreamProvider> MockCompresser { get; set; }
+  public Mock<IStreamCompressor> MockCompresser { get; set; }
 
   public Mock<ISaveChunk<string>> MockChunk { get; set; }
 
@@ -17,9 +17,9 @@ public class SaveFileTest
 
   public SaveFileTest()
   {
-    MockIO = new Mock<IIOStreamProvider>();
+    MockIO = new Mock<IStreamIO>();
     MockSerializer = new Mock<IStreamSerializer>();
-    MockCompresser = new Mock<ICompressionStreamProvider>();
+    MockCompresser = new Mock<IStreamCompressor>();
 
     MockChunk = new Mock<ISaveChunk<string>>();
 
@@ -38,7 +38,7 @@ public class SaveFileTest
 
     MockChunk.Setup(chunk => chunk.GetSaveData()).Returns("test").Verifiable();
     MockIO.Setup(io => io.Write()).Returns(io).Verifiable();
-    MockCompresser.Setup(compresser => compresser.CompressionStream(io)).Returns(compressionStream).Verifiable();
+    MockCompresser.Setup(compresser => compresser.Compress(io)).Returns(compressionStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Serialize(compressionStream, "test", typeof(string))).Verifiable();
 
     // Act
@@ -75,7 +75,7 @@ public class SaveFileTest
   public void Save_CompressionLevel_UsedByCompressor()
   {
     // Arrange
-    MockCompresser.Setup(compressor => compressor.CompressionStream(It.IsAny<Stream>(), CompressionLevel.Fastest)).Verifiable();
+    MockCompresser.Setup(compressor => compressor.Compress(It.IsAny<Stream>(), CompressionLevel.Fastest)).Verifiable();
 
     // Act
     SaveFile.Save(CompressionLevel.Fastest);
@@ -92,7 +92,7 @@ public class SaveFileTest
     var compressionStream = new MemoryStream();
 
     MockIO.Setup(io => io.Read()).Returns(ioStream).Verifiable();
-    MockCompresser.Setup(compresser => compresser.DecompressionStream(ioStream)).Returns(compressionStream).Verifiable();
+    MockCompresser.Setup(compresser => compresser.Decompress(ioStream)).Returns(compressionStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Deserialize(compressionStream, typeof(string))).Returns("test").Verifiable();
     MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
 

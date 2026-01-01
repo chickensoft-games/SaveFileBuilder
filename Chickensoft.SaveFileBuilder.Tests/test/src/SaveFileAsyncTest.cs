@@ -9,9 +9,9 @@ public class SaveFileAsyncTest
 {
   private CancellationToken CancellationToken { get; }
 
-  public Mock<IAsyncIOStreamProvider> MockAsyncIO { get; set; }
+  public Mock<IAsyncStreamIO> MockAsyncIO { get; set; }
   public Mock<IAsyncStreamSerializer> MockAsyncSerializer { get; set; }
-  public Mock<ICompressionStreamProvider> MockCompresser { get; set; }
+  public Mock<IStreamCompressor> MockCompresser { get; set; }
 
   public Mock<ISaveChunk<string>> MockChunk { get; set; }
 
@@ -21,9 +21,9 @@ public class SaveFileAsyncTest
   {
     CancellationToken = testContextAccessor.Current.CancellationToken;
 
-    MockAsyncIO = new Mock<IAsyncIOStreamProvider>();
+    MockAsyncIO = new Mock<IAsyncStreamIO>();
     MockAsyncSerializer = new Mock<IAsyncStreamSerializer>();
-    MockCompresser = new Mock<ICompressionStreamProvider>();
+    MockCompresser = new Mock<IStreamCompressor>();
 
     MockChunk = new Mock<ISaveChunk<string>>();
 
@@ -53,7 +53,7 @@ public class SaveFileAsyncTest
     var compressionStream = new MemoryStream();
 
     MockChunk.Setup(chunk => chunk.GetSaveData()).Returns("test").Verifiable();
-    MockCompresser.Setup(compresser => compresser.CompressionStream(It.IsAny<MemoryStream>(), It.IsAny<CompressionLevel>(), true)).Callback<Stream, CompressionLevel, bool>((stream, _, _) => ioStream = (MemoryStream)stream).Returns(compressionStream).Verifiable();
+    MockCompresser.Setup(compresser => compresser.Compress(It.IsAny<MemoryStream>(), It.IsAny<CompressionLevel>(), true)).Callback<Stream, CompressionLevel, bool>((stream, _, _) => ioStream = (MemoryStream)stream).Returns(compressionStream).Verifiable();
     MockAsyncSerializer.Setup(serializer => serializer.SerializeAsync(compressionStream, "test", typeof(string), CancellationToken)).Verifiable();
     MockAsyncIO.Setup(io => io.WriteAsync(It.Is<Stream>(stream => ioStream == stream), CancellationToken)).Verifiable();
 
@@ -91,7 +91,7 @@ public class SaveFileAsyncTest
   public async Task SaveAsync_CompressionLevel_UsedByCompressor()
   {
     // Arrange
-    MockCompresser.Setup(compressor => compressor.CompressionStream(It.IsAny<Stream>(), CompressionLevel.Fastest, true)).Verifiable();
+    MockCompresser.Setup(compressor => compressor.Compress(It.IsAny<Stream>(), CompressionLevel.Fastest, true)).Verifiable();
 
     // Act
     await SaveFile.SaveAsync(CompressionLevel.Fastest, CancellationToken);
@@ -108,7 +108,7 @@ public class SaveFileAsyncTest
     var decompressionStream = new MemoryStream();
 
     MockAsyncIO.Setup(io => io.ReadAsync(CancellationToken)).ReturnsAsync(ioStream).Verifiable();
-    MockCompresser.Setup(compresser => compresser.DecompressionStream(ioStream)).Returns(decompressionStream).Verifiable();
+    MockCompresser.Setup(compresser => compresser.Decompress(ioStream)).Returns(decompressionStream).Verifiable();
     MockAsyncSerializer.Setup(serializer => serializer.DeserializeAsync(decompressionStream, typeof(string), CancellationToken)).ReturnsAsync("test").Verifiable();
     MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
 

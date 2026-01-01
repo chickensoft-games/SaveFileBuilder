@@ -74,13 +74,13 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   public bool CanSaveSynchronously => _io is not null && _serializer is not null;
 
   private static InvalidOperationException SynchronousOperationNotAllowedException()
-    => new($"Synchronous operation is not allowed because either the {nameof(IIOStreamProvider)} or the {nameof(IStreamSerializer)} of the {nameof(SaveFile<>)} is null.");
+    => new($"Synchronous operation is not allowed because either the {nameof(IStreamIO)} or the {nameof(IStreamSerializer)} of the {nameof(SaveFile<>)} is null.");
 
-  private readonly IIOStreamProvider? _io;
-  private readonly IAsyncIOStreamProvider? _asyncIO;
+  private readonly IStreamIO? _io;
+  private readonly IAsyncStreamIO? _asyncIO;
   private readonly IStreamSerializer? _serializer;
   private readonly IAsyncStreamSerializer? _asyncSerializer;
-  private readonly ICompressionStreamProvider? _compressor;
+  private readonly IStreamCompressor? _compressor;
 
   /// <inheritdoc cref="ISaveFile{TData}"/>
   /// <param name="root"><inheritdoc cref="ISaveFile{TData}.Root" path="/summary" /></param>
@@ -91,11 +91,11 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   /// <param name="compressor">Compressor which the save file uses to compress and decompress data.</param>
   private SaveFile(
     ISaveChunk<TData> root,
-    IIOStreamProvider? io,
-    IAsyncIOStreamProvider? asyncIO,
+    IStreamIO? io,
+    IAsyncStreamIO? asyncIO,
     IStreamSerializer? serializer,
     IAsyncStreamSerializer? asyncSerializer,
-    ICompressionStreamProvider? compressor
+    IStreamCompressor? compressor
   )
   {
     Root = root;
@@ -106,40 +106,40 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     _compressor = compressor;
   }
 
-  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IStreamIO?, IAsyncStreamIO?, IStreamSerializer?, IAsyncStreamSerializer?, IStreamCompressor?)" />
   public SaveFile(
     ISaveChunk<TData> root,
-    IIOStreamProvider io,
+    IStreamIO io,
     IStreamSerializer serializer,
-    ICompressionStreamProvider? compressor = null
-  ) : this(root, io, io as IAsyncIOStreamProvider, serializer, serializer as IAsyncStreamSerializer, compressor)
+    IStreamCompressor? compressor = null
+  ) : this(root, io, io as IAsyncStreamIO, serializer, serializer as IAsyncStreamSerializer, compressor)
   { }
 
-  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IStreamIO?, IAsyncStreamIO?, IStreamSerializer?, IAsyncStreamSerializer?, IStreamCompressor?)" />
   public SaveFile(
     ISaveChunk<TData> root,
-    IIOStreamProvider io,
+    IStreamIO io,
     IAsyncStreamSerializer asyncSerializer,
-    ICompressionStreamProvider? compressor = null
-  ) : this(root, io, io as IAsyncIOStreamProvider, asyncSerializer as IStreamSerializer, asyncSerializer, compressor)
+    IStreamCompressor? compressor = null
+  ) : this(root, io, io as IAsyncStreamIO, asyncSerializer as IStreamSerializer, asyncSerializer, compressor)
   { }
 
-  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IStreamIO?, IAsyncStreamIO?, IStreamSerializer?, IAsyncStreamSerializer?, IStreamCompressor?)" />
   public SaveFile(
     ISaveChunk<TData> root,
-    IAsyncIOStreamProvider asyncIO,
+    IAsyncStreamIO asyncIO,
     IStreamSerializer serializer,
-    ICompressionStreamProvider? compressor = null
-  ) : this(root, asyncIO as IIOStreamProvider, asyncIO, serializer, serializer as IAsyncStreamSerializer, compressor)
+    IStreamCompressor? compressor = null
+  ) : this(root, asyncIO as IStreamIO, asyncIO, serializer, serializer as IAsyncStreamSerializer, compressor)
   { }
 
-  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IIOStreamProvider?, IAsyncIOStreamProvider?, IStreamSerializer?, IAsyncStreamSerializer?, ICompressionStreamProvider?)" />
+  /// <inheritdoc cref="SaveFile{TData}.SaveFile(ISaveChunk{TData}, IStreamIO?, IAsyncStreamIO?, IStreamSerializer?, IAsyncStreamSerializer?, IStreamCompressor?)" />
   public SaveFile(
     ISaveChunk<TData> root,
-    IAsyncIOStreamProvider asyncIO,
+    IAsyncStreamIO asyncIO,
     IAsyncStreamSerializer asyncSerializer,
-    ICompressionStreamProvider? compressor = null
-  ) : this(root, asyncIO as IIOStreamProvider, asyncIO, asyncSerializer as IStreamSerializer, asyncSerializer, compressor)
+    IStreamCompressor? compressor = null
+  ) : this(root, asyncIO as IStreamIO, asyncIO, asyncSerializer as IStreamSerializer, asyncSerializer, compressor)
   { }
 
   /// <inheritdoc />
@@ -151,7 +151,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     }
 
     using var ioStream = _io!.Write();
-    using var compressionStream = _compressor?.CompressionStream(ioStream, compressionLevel);
+    using var compressionStream = _compressor?.Compress(ioStream, compressionLevel);
     _serializer!.Serialize(compressionStream ?? ioStream, Root.GetSaveData());
   }
 
@@ -164,7 +164,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     }
 
     using var ioStream = _io!.Read();
-    using var decompressionStream = _compressor?.DecompressionStream(ioStream);
+    using var decompressionStream = _compressor?.Decompress(ioStream);
     var data = _serializer!.Deserialize<TData>(decompressionStream ?? ioStream);
     if (data is null)
     {
@@ -194,13 +194,13 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
     if (_asyncIO is null)
     {
       await using var ioStream = _io!.Write();
-      await using var compressionStream = _compressor?.CompressionStream(ioStream, compressionLevel);
+      await using var compressionStream = _compressor?.Compress(ioStream, compressionLevel);
       await serialize(compressionStream ?? ioStream);
     }
     else
     {
       await using var writeStream = new MemoryStream();
-      await using (var compressionStream = _compressor?.CompressionStream(writeStream, compressionLevel, true))
+      await using (var compressionStream = _compressor?.Compress(writeStream, compressionLevel, true))
       {
         await serialize(compressionStream ?? writeStream);
       }
@@ -229,7 +229,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
       ? await _asyncIO.ReadAsync(cancellationToken)
       : _io!.Read();
 
-    await using var decompressionStream = _compressor?.DecompressionStream(ioStream);
+    await using var decompressionStream = _compressor?.Decompress(ioStream);
 
     var data = _asyncSerializer is not null
       ? await _asyncSerializer.DeserializeAsync<TData>(decompressionStream ?? ioStream, cancellationToken)
@@ -273,24 +273,72 @@ public static class SaveFile
   /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses JSON serialization and GZip compression.</summary>
   public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
-    io: new FileIO(filePath),
+    io: new FileStreamIO(filePath),
     serializer: new JsonStreamSerializer(options),
-    compressor: new GZipCompression()
+    compressor: new GZipStreamCompressor()
   );
 
   /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, string, JsonSerializerOptions?)" />
   public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonSerializerContext context) where TData : class => new(
     root: root,
-    io: new FileIO(filePath),
+    io: new FileStreamIO(filePath),
     serializer: new JsonStreamSerializer(context),
-    compressor: new GZipCompression()
+    compressor: new GZipStreamCompressor()
   );
 
   /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, string, JsonSerializerOptions?)" />
   public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonTypeInfo jsonTypeInfo) where TData : class => new(
     root: root,
-    io: new FileIO(filePath),
+    io: new FileStreamIO(filePath),
     serializer: new JsonStreamSerializer(jsonTypeInfo),
-    compressor: new GZipCompression()
+    compressor: new GZipStreamCompressor()
+  );
+
+  /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses the specified io, JSON serialization and GZip compression.</summary>
+  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IStreamIO io, JsonSerializerOptions? options = null) where TData : class => new(
+    root: root,
+    io: io,
+    serializer: new JsonStreamSerializer(options),
+    compressor: new GZipStreamCompressor()
+  );
+
+  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IStreamIO io, JsonSerializerContext context) where TData : class => new(
+    root: root,
+    io: io,
+    serializer: new JsonStreamSerializer(context),
+    compressor: new GZipStreamCompressor()
+  );
+
+  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IStreamIO io, JsonTypeInfo jsonTypeInfo) where TData : class => new(
+    root: root,
+    io: io,
+    serializer: new JsonStreamSerializer(jsonTypeInfo),
+    compressor: new GZipStreamCompressor()
+  );
+
+  /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses the specified io, JSON serialization and GZip compression.</summary>
+  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerOptions? options = null) where TData : class => new(
+    root: root,
+    asyncIO: asyncIO,
+    serializer: new JsonStreamSerializer(options),
+    compressor: new GZipStreamCompressor()
+  );
+
+  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IAsyncStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerContext context) where TData : class => new(
+    root: root,
+    asyncIO: asyncIO,
+    serializer: new JsonStreamSerializer(context),
+    compressor: new GZipStreamCompressor()
+  );
+
+  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IAsyncStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonTypeInfo jsonTypeInfo) where TData : class => new(
+    root: root,
+    asyncIO: asyncIO,
+    serializer: new JsonStreamSerializer(jsonTypeInfo),
+    compressor: new GZipStreamCompressor()
   );
 }

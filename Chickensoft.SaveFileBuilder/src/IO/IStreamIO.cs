@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>Provides a read- and write <see cref="Stream"/> from an input / output source.</summary>
-public interface IIOStreamProvider
+public interface IStreamIO
 {
   /// <summary>Returns a read-only <see cref="Stream"/> from the io source.</summary>
   /// <returns>A new read-only <see cref="Stream"/> object from the io source.</returns>
@@ -24,7 +24,7 @@ public interface IIOStreamProvider
 }
 
 /// <summary>Provides a read <see cref="Stream"/> from- and requests a write <see cref="Stream"/> for an input / output source asynchronously.</summary>
-public interface IAsyncIOStreamProvider
+public interface IAsyncStreamIO
 {
   /// <summary>Asynchronously reads the underlying data and returns a read-only <see cref="Stream"/> from the io source.</summary>
   /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous read operation.</param>

@@ -8,7 +8,7 @@ using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
-/// <summary>Defines the relative <see cref="Uri"/>'s used for specific HTTP requests by the <see cref="HttpIO"/>.</summary>
+/// <summary>Defines the relative <see cref="Uri"/>'s used for specific HTTP requests by the <see cref="HttpStreamIO"/>.</summary>
 /// <param name="ReadUri">The relative <see cref="Uri"/> used for read requests.</param>
 /// <param name="WriteUri">The relative <see cref="Uri"/> used for write requests.</param>
 /// <param name="ExistsUri">The relative <see cref="Uri"/> used for exists requests.</param>
@@ -40,7 +40,7 @@ public readonly record struct HttpIORequestUris(
 }
 
 /// <summary>Provides a read <see cref="Stream"/> from- and requests a write <see cref="Stream"/> for an Http address.</summary>
-public class HttpIO : IAsyncIOStreamProvider, IDisposable
+public class HttpStreamIO : IAsyncStreamIO, IDisposable
 {
   private bool _isDisposed;
 
@@ -64,30 +64,30 @@ public class HttpIO : IAsyncIOStreamProvider, IDisposable
   /// <remarks>If the <see cref="HttpContentHeaders.ContentLength"/> is left null, it will be set to the length of the stream being written. In most cases, this is the desired behavior.</remarks>
   public HttpContentHeaders WriteHeaders => _emptyContent.Headers;
 
-  /// <summary>Initializes a new instance of the <see cref="HttpIO"/> class.</summary>
-  public HttpIO()
+  /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class.</summary>
+  public HttpStreamIO()
     : this(new HttpClient())
   { }
 
-  /// <summary>Initializes a new instance of the <see cref="HttpIO"/> class with the specified timeout.</summary>
-  /// <inheritdoc cref="HttpIO(string, TimeSpan)" path="/param[@name='timeout']"/>
-  public HttpIO(TimeSpan timeout)
+  /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified timeout.</summary>
+  /// <inheritdoc cref="HttpStreamIO(string, TimeSpan)" path="/param[@name='timeout']"/>
+  public HttpStreamIO(TimeSpan timeout)
   : this(new HttpClient()
   {
     Timeout = timeout
   })
   { }
 
-  /// <inheritdoc cref="HttpIO(string)" />
-  public HttpIO(Uri baseAddress)
+  /// <inheritdoc cref="HttpStreamIO(string)" />
+  public HttpStreamIO(Uri baseAddress)
     : this(new HttpClient()
     {
       BaseAddress = baseAddress,
     })
   { }
 
-  /// <inheritdoc cref="HttpIO(string, TimeSpan)" />
-  public HttpIO(Uri baseAddress, TimeSpan timeout)
+  /// <inheritdoc cref="HttpStreamIO(string, TimeSpan)" />
+  public HttpStreamIO(Uri baseAddress, TimeSpan timeout)
     : this(new HttpClient()
     {
       BaseAddress = baseAddress,
@@ -95,23 +95,23 @@ public class HttpIO : IAsyncIOStreamProvider, IDisposable
     })
   { }
 
-  /// <summary>Initializes a new instance of the <see cref="HttpIO"/> class with the specified address.</summary>
-  /// <inheritdoc cref="HttpIO(string, TimeSpan)" path="/param[@name='baseAddress']"/>
-  public HttpIO(string baseAddress)
+  /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified address.</summary>
+  /// <inheritdoc cref="HttpStreamIO(string, TimeSpan)" path="/param[@name='baseAddress']"/>
+  public HttpStreamIO(string baseAddress)
   : this(new Uri(baseAddress))
   { }
 
-  /// <summary>Initializes a new instance of the <see cref="HttpIO"/> class with the specified address and timeout.</summary>
+  /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified address and timeout.</summary>
   /// <param name="baseAddress">The base address used when sending requests.</param>
   /// <param name="timeout">The timespan to wait before a request times out.</param>
-  public HttpIO(string baseAddress, TimeSpan timeout)
+  public HttpStreamIO(string baseAddress, TimeSpan timeout)
     : this(new Uri(baseAddress), timeout)
   { }
 
-  /// <summary>Initializes a new instance of the <see cref="HttpIO"/> class with the specified client, and specifies whether that client should be disposed when this instance is disposed.</summary>
+  /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified client, and specifies whether that client should be disposed when this instance is disposed.</summary>
   /// <param name="client">The <see cref="HttpClient"/> to use for requests.</param>
   /// <param name="disposeClient"><see langword="true"/> if the inner client should be disposed of by <see cref="Dispose()"/>; <see langword="false"/> if you intend to reuse the client.</param>
-  public HttpIO(HttpClient client, bool disposeClient = true)
+  public HttpStreamIO(HttpClient client, bool disposeClient = true)
   {
     _httpClient = client;
     _disposeClient = disposeClient;
