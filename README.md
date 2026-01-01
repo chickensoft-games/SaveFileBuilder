@@ -157,15 +157,15 @@ public class UserPreferences
 
 Saving a file involves 2 to 3 steps:
 - input / output (io)
-- (preferably) compression
 - serialization
+- (preferably) compression
 
 SaveFile handles these steps for you, and optimally at that! By using [Streams] under the hood, SaveFile can efficiently save and load data without unnecessary memory allocations.
 
 But the :zap: REAL POWER :zap: of SaveFile comes from its flexibility. You can define your own IO providers, compression algorithms, and serialization formats by implementing the relevant interfaces:
 - IStreamIO / IAsyncStreamIO for io
-- IStreamCompressor for compression
 - IStreamSerializer / IAsyncStreamSerializer for serialization
+- IStreamCompressor for compression
 
 ```csharp
 public class AzureStreamIO : IAsyncStreamIO
@@ -176,16 +176,16 @@ public class AzureStreamIO : IAsyncStreamIO
   public bool DeleteAsync() => //...
 }
 
-public class SnappyStreamCompressor : IStreamCompressor
-{
-  public Stream Compress(Stream stream, CompressionLevel compressionLevel, bool leaveOpen) => //...
-  public Stream Decompress(Stream stream, bool leaveOpen) => //...
-}
-
 public class YamlStreamSerializer : IStreamSerializer
 {
   public void Serialize(Stream stream, object? value, Type inputType) => //...
   public object? Deserialize(Stream stream, Type returnType) => //...
+}
+
+public class SnappyStreamCompressor : IStreamCompressor
+{
+  public Stream Compress(Stream stream, CompressionLevel compressionLevel, bool leaveOpen) => //...
+  public Stream Decompress(Stream stream, bool leaveOpen) => //...
 }
 ```
 
