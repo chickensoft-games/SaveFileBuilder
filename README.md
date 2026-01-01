@@ -168,7 +168,7 @@ But the :zap: REAL POWER :zap: of SaveFile comes from its flexibility. You can d
 - IStreamSerializer / IAsyncStreamSerializer for serialization
 
 ```csharp
-public class AzureStreamIO : IAsyncIOStreamProvider
+public class AzureStreamIO : IAsyncStreamIO
 {
   public Stream ReadAsync() => //...
   public void WriteAsync(Stream stream) => //...
