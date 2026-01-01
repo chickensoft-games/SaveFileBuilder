@@ -228,9 +228,6 @@ public class App
 
 Using [Introspection] and [AutoInject], you can link chunks together in Godot by providing- and accessing dependencies in your scene tree. Mark the relevant nodes as `IAutoNode`'s, provide dependencies from parent nodes, and access them in child nodes. 
 
-> [!TIP]
-> Check out the Chickensoft [Game Demo] for a complete, working example of using SaveFileBuilder to save composed states of everything that needs to be persisted in a game.
-
 ```csharp
 using Chickensoft.Introspection;
 using Chickensoft.AutoInject;
@@ -296,6 +293,9 @@ public partial class Player : CharacterBody3D
 
 > [!TIP]
 > You can easily serialize entire [LogicBlocks] with [Chickensoft.Serialization].
+
+> [!TIP]
+> Check out the Chickensoft [Game Demo] for a complete, working example of using SaveFileBuilder to save composed states of everything that needs to be persisted in a game.
 
 ---
 
