@@ -9,7 +9,7 @@ public class SaveFileTest
 {
   public Mock<IStreamIO> MockIO { get; set; }
   public Mock<IStreamSerializer> MockSerializer { get; set; }
-  public Mock<IStreamCompressor> MockCompresser { get; set; }
+  public Mock<IStreamCompressor> MockCompressor { get; set; }
 
   public Mock<ISaveChunk<string>> MockChunk { get; set; }
 
@@ -19,11 +19,11 @@ public class SaveFileTest
   {
     MockIO = new Mock<IStreamIO>();
     MockSerializer = new Mock<IStreamSerializer>();
-    MockCompresser = new Mock<IStreamCompressor>();
+    MockCompressor = new Mock<IStreamCompressor>();
 
     MockChunk = new Mock<ISaveChunk<string>>();
 
-    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, MockCompresser.Object);
+    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, MockCompressor.Object);
   }
 
   [Fact]
@@ -38,7 +38,7 @@ public class SaveFileTest
 
     MockChunk.Setup(chunk => chunk.GetSaveData()).Returns("test").Verifiable();
     MockIO.Setup(io => io.Write()).Returns(io).Verifiable();
-    MockCompresser.Setup(compresser => compresser.Compress(io)).Returns(compressionStream).Verifiable();
+    MockCompressor.Setup(compressor => compressor.Compress(io)).Returns(compressionStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Serialize(compressionStream, "test", typeof(string))).Verifiable();
 
     // Act
@@ -47,7 +47,7 @@ public class SaveFileTest
     // Assert
     MockChunk.Verify();
     MockIO.Verify();
-    MockCompresser.Verify();
+    MockCompressor.Verify();
     MockSerializer.Verify();
   }
 
@@ -75,13 +75,13 @@ public class SaveFileTest
   public void Save_CompressionLevel_UsedByCompressor()
   {
     // Arrange
-    MockCompresser.Setup(compressor => compressor.Compress(It.IsAny<Stream>(), CompressionLevel.Fastest)).Verifiable();
+    MockCompressor.Setup(compressor => compressor.Compress(It.IsAny<Stream>(), CompressionLevel.Fastest)).Verifiable();
 
     // Act
     SaveFile.Save(CompressionLevel.Fastest);
 
     // Assert
-    MockCompresser.Verify();
+    MockCompressor.Verify();
   }
 
   [Fact]
@@ -92,7 +92,7 @@ public class SaveFileTest
     var compressionStream = new MemoryStream();
 
     MockIO.Setup(io => io.Read()).Returns(ioStream).Verifiable();
-    MockCompresser.Setup(compresser => compresser.Decompress(ioStream)).Returns(compressionStream).Verifiable();
+    MockCompressor.Setup(compressor => compressor.Decompress(ioStream)).Returns(compressionStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Deserialize(compressionStream, typeof(string))).Returns("test").Verifiable();
     MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
 
@@ -101,7 +101,7 @@ public class SaveFileTest
 
     // Assert
     MockIO.Verify();
-    MockCompresser.Verify();
+    MockCompressor.Verify();
     MockSerializer.Verify();
     MockChunk.Verify();
   }
