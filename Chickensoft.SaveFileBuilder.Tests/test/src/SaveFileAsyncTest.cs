@@ -108,7 +108,7 @@ public class SaveFileAsyncTest
     var decompressionStream = new MemoryStream();
 
     MockAsyncIO.Setup(io => io.ReadAsync(CancellationToken)).ReturnsAsync(ioStream).Verifiable();
-    MockCompressor.Setup(compressor => compressor.Decompress(ioStream)).Returns(decompressionStream).Verifiable();
+    MockCompressor.Setup(compressor => compressor.Decompress(ioStream, false)).Returns(decompressionStream).Verifiable();
     MockAsyncSerializer.Setup(serializer => serializer.DeserializeAsync(decompressionStream, typeof(string), CancellationToken)).ReturnsAsync("test").Verifiable();
     MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
 

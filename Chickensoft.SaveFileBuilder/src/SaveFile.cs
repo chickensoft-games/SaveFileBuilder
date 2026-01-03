@@ -74,7 +74,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   public bool CanSaveSynchronously => _io is not null && _serializer is not null;
 
   private static InvalidOperationException SynchronousOperationNotAllowedException()
-    => new($"Synchronous operation is not allowed because either the {nameof(IStreamIO)} or the {nameof(IStreamSerializer)} of the {nameof(SaveFile<>)} is null.");
+    => new($"Synchronous operation is not allowed because either the {nameof(IStreamIO)} or the {nameof(IStreamSerializer)} of the {nameof(SaveFile)} is null.");
 
   private readonly IStreamIO? _io;
   private readonly IAsyncStreamIO? _asyncIO;
