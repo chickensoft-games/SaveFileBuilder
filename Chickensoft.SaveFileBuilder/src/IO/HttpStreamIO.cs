@@ -103,7 +103,7 @@ public class HttpStreamIO : IAsyncStreamIO, IDisposable
 
   /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified address and timeout.</summary>
   /// <param name="baseAddress">The base address used when sending requests.</param>
-  /// <param name="timeout">The timespan to wait before a request times out.</param>
+  /// <param name="timeout">The time to wait before a request times out.</param>
   public HttpStreamIO(string baseAddress, TimeSpan timeout)
     : this(new Uri(baseAddress), timeout)
   { }
