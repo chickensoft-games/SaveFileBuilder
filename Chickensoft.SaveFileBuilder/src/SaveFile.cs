@@ -295,23 +295,23 @@ public static class SaveFile
   );
 
   /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses the specified io, JSON serialization and GZip compression.</summary>
-  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IStreamIO io, JsonSerializerOptions? options = null) where TData : class => new(
+  public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IStreamIO io, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
     io: io,
     serializer: new JsonStreamSerializer(options),
     compressor: new GZipStreamCompressor()
   );
 
-  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IStreamIO, JsonSerializerOptions?)" />
-  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IStreamIO io, JsonSerializerContext context) where TData : class => new(
+  /// <inheritdoc cref="CreateGZipJsonIO{TData}(ISaveChunk{TData}, IStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IStreamIO io, JsonSerializerContext context) where TData : class => new(
     root: root,
     io: io,
     serializer: new JsonStreamSerializer(context),
     compressor: new GZipStreamCompressor()
   );
 
-  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IStreamIO, JsonSerializerOptions?)" />
-  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IStreamIO io, JsonTypeInfo jsonTypeInfo) where TData : class => new(
+  /// <inheritdoc cref="CreateGZipJsonIO{TData}(ISaveChunk{TData}, IStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IStreamIO io, JsonTypeInfo jsonTypeInfo) where TData : class => new(
     root: root,
     io: io,
     serializer: new JsonStreamSerializer(jsonTypeInfo),
@@ -319,23 +319,23 @@ public static class SaveFile
   );
 
   /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses the specified io, JSON serialization and GZip compression.</summary>
-  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerOptions? options = null) where TData : class => new(
+  public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
     asyncIO: asyncIO,
     serializer: new JsonStreamSerializer(options),
     compressor: new GZipStreamCompressor()
   );
 
-  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IAsyncStreamIO, JsonSerializerOptions?)" />
-  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerContext context) where TData : class => new(
+  /// <inheritdoc cref="CreateGZipJsonIO{TData}(ISaveChunk{TData}, IAsyncStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerContext context) where TData : class => new(
     root: root,
     asyncIO: asyncIO,
     serializer: new JsonStreamSerializer(context),
     compressor: new GZipStreamCompressor()
   );
 
-  /// <inheritdoc cref="CreateGZipJsonFile{TData}(ISaveChunk{TData}, IAsyncStreamIO, JsonSerializerOptions?)" />
-  public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonTypeInfo jsonTypeInfo) where TData : class => new(
+  /// <inheritdoc cref="CreateGZipJsonIO{TData}(ISaveChunk{TData}, IAsyncStreamIO, JsonSerializerOptions?)" />
+  public static SaveFile<TData> CreateGZipJsonFIO<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonTypeInfo jsonTypeInfo) where TData : class => new(
     root: root,
     asyncIO: asyncIO,
     serializer: new JsonStreamSerializer(jsonTypeInfo),
