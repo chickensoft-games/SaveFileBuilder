@@ -72,10 +72,10 @@ public class HttpStreamIO : IAsyncStreamIO, IDisposable
   /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified timeout.</summary>
   /// <inheritdoc cref="HttpStreamIO(string, TimeSpan)" path="/param[@name='timeout']"/>
   public HttpStreamIO(TimeSpan timeout)
-  : this(new HttpClient()
-  {
-    Timeout = timeout
-  })
+    : this(new HttpClient()
+    {
+      Timeout = timeout
+    })
   { }
 
   /// <inheritdoc cref="HttpStreamIO(string)" />
@@ -98,7 +98,7 @@ public class HttpStreamIO : IAsyncStreamIO, IDisposable
   /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified address.</summary>
   /// <inheritdoc cref="HttpStreamIO(string, TimeSpan)" path="/param[@name='baseAddress']"/>
   public HttpStreamIO(string baseAddress)
-  : this(new Uri(baseAddress))
+    : this(new Uri(baseAddress))
   { }
 
   /// <summary>Initializes a new instance of the <see cref="HttpStreamIO"/> class with the specified address and timeout.</summary>
