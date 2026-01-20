@@ -25,10 +25,10 @@
     <PackageTags />
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageProjectUrl></PackageProjectUrl>
+    <PackageProjectUrl>https://www.nuget.org/packages/Chickensoft.SaveFileBuilder</PackageProjectUrl>
 
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl></RepositoryUrl>
+    <RepositoryUrl>https://github.com/chickensoft-games/SaveFileBuilder</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
