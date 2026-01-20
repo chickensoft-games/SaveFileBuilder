@@ -31,7 +31,210 @@ public class HttpStreamIOTest : IDisposable
     GC.SuppressFinalize(this);
   }
 
+  #region HttpIORequestUris Tests
+
+  [Fact]
+  public void HttpIORequestUris_DefaultConstructor_AllUrisAreNull()
+  {
+    // Arrange & Act
+    var uris = new HttpIORequestUris();
+
+    // Assert
+    Assert.Null(uris.ReadUri);
+    Assert.Null(uris.WriteUri);
+    Assert.Null(uris.ExistsUri);
+    Assert.Null(uris.DeleteUri);
+  }
+
+  [Fact]
+  public void HttpIORequestUris_WithUriParameters_SetsUrisCorrectly()
+  {
+    // Arrange
+    var readUri = new Uri("api/read", UriKind.Relative);
+    var writeUri = new Uri("api/write", UriKind.Relative);
+    var existsUri = new Uri("api/exists", UriKind.Relative);
+    var deleteUri = new Uri("api/delete", UriKind.Relative);
+
+    // Act
+    var uris = new HttpIORequestUris(readUri, writeUri, existsUri, deleteUri);
+
+    // Assert
+    Assert.Equal(readUri, uris.ReadUri);
+    Assert.Equal(writeUri, uris.WriteUri);
+    Assert.Equal(existsUri, uris.ExistsUri);
+    Assert.Equal(deleteUri, uris.DeleteUri);
+  }
+
+  [Fact]
+  public void HttpIORequestUris_WithStringParameters_SetsUrisCorrectly()
+  {
+    // Arrange & Act
+    var uris = new HttpIORequestUris(
+      readUri: "api/read",
+      writeUri: "api/write",
+      existsUri: "api/exists",
+      deleteUri: "api/delete"
+    );
+
+    // Assert
+    Assert.NotNull(uris.ReadUri);
+    Assert.Equal("api/read", uris.ReadUri.ToString());
+    Assert.NotNull(uris.WriteUri);
+    Assert.Equal("api/write", uris.WriteUri.ToString());
+    Assert.NotNull(uris.ExistsUri);
+    Assert.Equal("api/exists", uris.ExistsUri.ToString());
+    Assert.NotNull(uris.DeleteUri);
+    Assert.Equal("api/delete", uris.DeleteUri.ToString());
+  }
+
+  [Fact]
+  public void HttpIORequestUris_WithNullStringParameters_SetsUrisToNull()
+  {
+    // Arrange & Act
+    var uris = new HttpIORequestUris(
+      readUri: null,
+      writeUri: null,
+      existsUri: null,
+      deleteUri: null
+    );
+
+    // Assert
+    Assert.Null(uris.ReadUri);
+    Assert.Null(uris.WriteUri);
+    Assert.Null(uris.ExistsUri);
+    Assert.Null(uris.DeleteUri);
+  }
+
+  [Fact]
+  public void HttpIORequestUris_WithPartialStringParameters_SetsSomeUrisCorrectly()
+  {
+    // Arrange & Act
+    var uris = new HttpIORequestUris(
+      readUri: "api/read",
+      writeUri: null,
+      existsUri: "api/exists",
+      deleteUri: null
+    );
+
+    // Assert
+    Assert.NotNull(uris.ReadUri);
+    Assert.Equal("api/read", uris.ReadUri.ToString());
+    Assert.Null(uris.WriteUri);
+    Assert.NotNull(uris.ExistsUri);
+    Assert.Equal("api/exists", uris.ExistsUri.ToString());
+    Assert.Null(uris.DeleteUri);
+  }
+
+  [Fact]
+  public void HttpIORequestUris_CanBeSet_UsingInitSyntax()
+  {
+    // Arrange
+    var readUri = new Uri("api/read", UriKind.Relative);
+    var writeUri = new Uri("api/write", UriKind.Relative);
+    var existsUri = new Uri("api/exists", UriKind.Relative);
+    var deleteUri = new Uri("api/delete", UriKind.Relative);
+    // Act
+    var uris = new HttpIORequestUris(
+      readUri: "api/ignored",
+      writeUri: "api/ignored",
+      existsUri: "api/ignored",
+      deleteUri: "api/ignored"
+    )
+    {
+      ReadUri = readUri,
+      WriteUri = writeUri,
+      ExistsUri = existsUri,
+      DeleteUri = deleteUri
+    };
+    // Assert
+    Assert.Equal(readUri, uris.ReadUri);
+    Assert.Equal(writeUri, uris.WriteUri);
+    Assert.Equal(existsUri, uris.ExistsUri);
+    Assert.Equal(deleteUri, uris.DeleteUri);
+  }
+
+  #endregion
+
   #region Constructor Tests
+
+  [Fact]
+  public void Constructor_Default_CreatesInstanceSuccessfully()
+  {
+    // Arrange & Act
+    using var streamIO = new HttpStreamIO();
+
+    // Assert
+    Assert.NotNull(streamIO);
+    Assert.NotNull(streamIO.ReadHeaders);
+    Assert.NotNull(streamIO.WriteHeaders);
+  }
+
+  [Fact]
+  public void Constructor_WithTimeout_SetsTimeoutCorrectly()
+  {
+    // Arrange
+    var timeout = TimeSpan.FromSeconds(30);
+
+    // Act
+    using var streamIO = new HttpStreamIO(timeout);
+
+    // Assert
+    Assert.NotNull(streamIO);
+  }
+
+  [Fact]
+  public void Constructor_WithUriBaseAddress_SetsBaseAddressCorrectly()
+  {
+    // Arrange
+    var baseAddress = new Uri("http://example.com");
+
+    // Act
+    using var streamIO = new HttpStreamIO(baseAddress);
+
+    // Assert
+    Assert.NotNull(streamIO);
+  }
+
+  [Fact]
+  public void Constructor_WithUriBaseAddressAndTimeout_SetsPropertiesCorrectly()
+  {
+    // Arrange
+    var baseAddress = new Uri("http://example.com");
+    var timeout = TimeSpan.FromSeconds(45);
+
+    // Act
+    using var streamIO = new HttpStreamIO(baseAddress, timeout);
+
+    // Assert
+    Assert.NotNull(streamIO);
+  }
+
+  [Fact]
+  public void Constructor_WithStringBaseAddress_SetsBaseAddressCorrectly()
+  {
+    // Arrange
+    var baseAddress = "http://example.com";
+
+    // Act
+    using var streamIO = new HttpStreamIO(baseAddress);
+
+    // Assert
+    Assert.NotNull(streamIO);
+  }
+
+  [Fact]
+  public void Constructor_WithStringBaseAddressAndTimeout_SetsPropertiesCorrectly()
+  {
+    // Arrange
+    var baseAddress = "http://example.com";
+    var timeout = TimeSpan.FromSeconds(60);
+
+    // Act
+    using var streamIO = new HttpStreamIO(baseAddress, timeout);
+
+    // Assert
+    Assert.NotNull(streamIO);
+  }
 
   [Fact]
   public async Task Constructor_WithHttpClientDisposeTrue_DisposesClientOnDispose()
@@ -65,6 +268,24 @@ public class HttpStreamIOTest : IDisposable
     var exception = Record.Exception(() => _ = client.BaseAddress);
     Assert.Null(exception);
     client.Dispose();
+  }
+
+  [Fact]
+  public void RequestUris_CanBeSet_UsingInitSyntax()
+  {
+    // Arrange
+    var readUri = new Uri("api/custom-read", UriKind.Relative);
+    var writeUri = new Uri("api/custom-write", UriKind.Relative);
+
+    // Act
+    using var streamIO = new HttpStreamIO(_httpClient, disposeClient: false)
+    {
+      RequestUris = new HttpIORequestUris(ReadUri: readUri, WriteUri: writeUri)
+    };
+
+    // Assert
+    Assert.Equal(readUri, streamIO.RequestUris.ReadUri);
+    Assert.Equal(writeUri, streamIO.RequestUris.WriteUri);
   }
 
   #endregion
@@ -110,6 +331,23 @@ public class HttpStreamIOTest : IDisposable
 
     // Assert
     Assert.Equal(1024, streamIO.WriteHeaders.ContentLength);
+  }
+
+  [Fact]
+  public void WriteHeaders_WithMultipleCustomHeaders_AllHeadersAreSet()
+  {
+    // Arrange
+    using var streamIO = new HttpStreamIO(_httpClient, disposeClient: false);
+
+    // Act
+    streamIO.WriteHeaders.Add("X-Header-1", "value1");
+    streamIO.WriteHeaders.Add("X-Header-2", "value2");
+    streamIO.WriteHeaders.Add("X-Header-3", "value3");
+
+    // Assert
+    Assert.True(streamIO.WriteHeaders.Contains("X-Header-1"));
+    Assert.True(streamIO.WriteHeaders.Contains("X-Header-2"));
+    Assert.True(streamIO.WriteHeaders.Contains("X-Header-3"));
   }
 
   #endregion
@@ -187,6 +425,41 @@ public class HttpStreamIOTest : IDisposable
     await Assert.ThrowsAsync<HttpRequestException>(
       async () => await streamIO.ReadAsync(CancellationToken)
     );
+  }
+
+  [Fact]
+  public async Task ReadAsync_WithEmptyResponse_ReturnsEmptyStream()
+  {
+    // Arrange
+    _mockHandler.SetupResponse(HttpStatusCode.OK, "");
+    using var streamIO = new HttpStreamIO(_httpClient, disposeClient: false)
+    {
+      RequestUris = new HttpIORequestUris(ReadUri: new Uri("api/read", UriKind.Relative))
+    };
+
+    // Act
+    using var stream = await streamIO.ReadAsync(CancellationToken);
+
+    // Assert
+    Assert.Equal(0, stream.Length);
+  }
+
+  [Fact]
+  public async Task ReadAsync_WithLargeResponse_ReturnsFullContent()
+  {
+    // Arrange
+    var largeContent = new string('X', 1024 * 1024); // 1MB of data
+    _mockHandler.SetupResponse(HttpStatusCode.OK, largeContent);
+    using var streamIO = new HttpStreamIO(_httpClient, disposeClient: false)
+    {
+      RequestUris = new HttpIORequestUris(ReadUri: new Uri("api/read", UriKind.Relative))
+    };
+
+    // Act
+    using var stream = await streamIO.ReadAsync(CancellationToken);
+
+    // Assert
+    Assert.Equal(largeContent.Length, stream.Length);
   }
 
   #endregion
@@ -297,6 +570,44 @@ public class HttpStreamIOTest : IDisposable
     await Assert.ThrowsAsync<TaskCanceledException>(
       async () => await streamIO.WriteAsync(stream, cts.Token)
     );
+  }
+
+  [Fact]
+  public async Task WriteAsync_WithEmptyStream_PostsSuccessfully()
+  {
+    // Arrange
+    var stream = new MemoryStream();
+    _mockHandler.SetupResponse(HttpStatusCode.OK, "");
+    using var streamIO = new HttpStreamIO(_httpClient, disposeClient: false)
+    {
+      RequestUris = new HttpIORequestUris(WriteUri: new Uri("api/write", UriKind.Relative))
+    };
+
+    // Act
+    await streamIO.WriteAsync(stream, CancellationToken);
+
+    // Assert
+    Assert.Equal(0, _mockHandler.LastRequest?.Content?.Headers.ContentLength);
+  }
+
+  [Fact]
+  public async Task WriteAsync_WithLargeStream_PostsSuccessfully()
+  {
+    // Arrange
+    var largeData = new byte[1024 * 1024]; // 1MB
+    Array.Fill(largeData, (byte)'A');
+    var stream = new MemoryStream(largeData);
+    _mockHandler.SetupResponse(HttpStatusCode.OK, "");
+    using var streamIO = new HttpStreamIO(_httpClient, disposeClient: false)
+    {
+      RequestUris = new HttpIORequestUris(WriteUri: new Uri("api/write", UriKind.Relative))
+    };
+
+    // Act
+    await streamIO.WriteAsync(stream, CancellationToken);
+
+    // Assert
+    Assert.Equal(largeData.Length, _mockHandler.LastRequest?.Content?.Headers.ContentLength);
   }
 
   #endregion

@@ -31,10 +31,10 @@ public readonly record struct HttpIORequestUris(
     string? existsUri = null,
     string? deleteUri = null
   ) : this(
-    readUri is not null ? new Uri(readUri) : null,
-    writeUri is not null ? new Uri(writeUri) : null,
-    existsUri is not null ? new Uri(existsUri) : null,
-    deleteUri is not null ? new Uri(deleteUri) : null
+    readUri is not null ? new Uri(readUri, UriKind.RelativeOrAbsolute) : null,
+    writeUri is not null ? new Uri(writeUri, UriKind.RelativeOrAbsolute) : null,
+    existsUri is not null ? new Uri(existsUri, UriKind.RelativeOrAbsolute) : null,
+    deleteUri is not null ? new Uri(deleteUri, UriKind.RelativeOrAbsolute) : null
   )
   { }
 }

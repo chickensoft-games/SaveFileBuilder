@@ -46,6 +46,34 @@ public class SaveFileAsyncTest
   public void Delete_ThrowsInvalidOperationException() => Assert.Throws<InvalidOperationException>(SaveFile.Delete);
 
   [Fact]
+  public void Constructor_WithIStreamIOAndIAsyncStreamSerializer_CreatesInstanceSuccessfully()
+  {
+    // Arrange
+    var mockStreamIO = new Mock<IStreamIO>();
+    var mockAsyncSerializer = new Mock<IAsyncStreamSerializer>();
+
+    // Act
+    var saveFile = new SaveFile<string>(MockChunk.Object, mockStreamIO.Object, mockAsyncSerializer.Object, MockCompressor.Object);
+
+    // Assert
+    Assert.NotNull(saveFile);
+  }
+
+  [Fact]
+  public void Constructor_WithIAsyncStreamIOAndIStreamSerializer_CreatesInstanceSuccessfully()
+  {
+    // Arrange
+    var mockAsyncStreamIO = new Mock<IAsyncStreamIO>();
+    var mockSerializer = new Mock<IStreamSerializer>();
+
+    // Act
+    var saveFile = new SaveFile<string>(MockChunk.Object, mockAsyncStreamIO.Object, mockSerializer.Object, MockCompressor.Object);
+
+    // Assert
+    Assert.NotNull(saveFile);
+  }
+
+  [Fact]
   public async Task SaveAsync_WritesCompressesAndSerializes()
   {
     // Arrange

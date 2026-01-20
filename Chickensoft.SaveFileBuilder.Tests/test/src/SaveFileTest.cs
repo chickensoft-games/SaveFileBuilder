@@ -176,6 +176,14 @@ public class SaveFileTest
   }
 
   [Fact]
+  public void SaveAsync_CompressorIsNull_CompletedSynchronously()
+  {
+    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, null);
+    var task = SaveFile.SaveAsync(cancellationToken: TestContext.Current.CancellationToken);
+    Assert.True(task.IsCompletedSuccessfully);
+  }
+
+  [Fact]
   public void LoadAsync_CompletedSynchronously()
   {
     var task = SaveFile.LoadAsync(TestContext.Current.CancellationToken);

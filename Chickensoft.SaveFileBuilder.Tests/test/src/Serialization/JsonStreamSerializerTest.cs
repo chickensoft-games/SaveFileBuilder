@@ -2,25 +2,11 @@ namespace Chickensoft.SaveFileBuilder.Tests.Serialization;
 
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Chickensoft.SaveFileBuilder.Serialization;
 
-public partial class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
+public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
 {
   private CancellationToken CancellationToken { get; } = testContextAccessor.Current.CancellationToken;
-
-  #region Test Models and Context
-
-  private class TestData
-  {
-    public string Name { get; set; } = string.Empty;
-    public int Value { get; set; }
-  }
-
-  [JsonSerializable(typeof(TestData))]
-  private partial class TestJsonContext : JsonSerializerContext;
-
-  #endregion
 
   #region Serialize Tests
 
