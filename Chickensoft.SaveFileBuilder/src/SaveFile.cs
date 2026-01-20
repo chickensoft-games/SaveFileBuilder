@@ -322,7 +322,7 @@ public static class SaveFile
   public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
     asyncIO: asyncIO,
-    serializer: new JsonStreamSerializer(options),
+    asyncSerializer: new JsonStreamSerializer(options),
     compressor: new GZipStreamCompressor()
   );
 
@@ -330,7 +330,7 @@ public static class SaveFile
   public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerContext context) where TData : class => new(
     root: root,
     asyncIO: asyncIO,
-    serializer: new JsonStreamSerializer(context),
+    asyncSerializer: new JsonStreamSerializer(context),
     compressor: new GZipStreamCompressor()
   );
 
@@ -338,7 +338,7 @@ public static class SaveFile
   public static SaveFile<TData> CreateGZipJsonFIO<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonTypeInfo jsonTypeInfo) where TData : class => new(
     root: root,
     asyncIO: asyncIO,
-    serializer: new JsonStreamSerializer(jsonTypeInfo),
+    asyncSerializer: new JsonStreamSerializer(jsonTypeInfo),
     compressor: new GZipStreamCompressor()
   );
 }
