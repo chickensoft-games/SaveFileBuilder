@@ -830,7 +830,7 @@ public class HttpStreamIOTest : IDisposable
 /// <summary>
 /// Mock HttpMessageHandler for testing HTTP requests without actual network calls.
 /// </summary>
-internal class MockHttpMessageHandler : HttpMessageHandler
+internal sealed class MockHttpMessageHandler : HttpMessageHandler
 {
   private HttpStatusCode _statusCode = HttpStatusCode.OK;
   private string _content = "";
