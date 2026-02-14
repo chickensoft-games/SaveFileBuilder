@@ -9,4 +9,4 @@ public class TestData
 }
 
 [JsonSerializable(typeof(TestData))]
-internal partial class TestJsonContext : JsonSerializerContext;
+internal sealed partial class TestJsonContext : JsonSerializerContext;
