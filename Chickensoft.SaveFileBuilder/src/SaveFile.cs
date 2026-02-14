@@ -1,6 +1,7 @@
 namespace Chickensoft.SaveFileBuilder;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
@@ -64,12 +65,22 @@ public interface ISaveFile<TData> where TData : class
 /// <inheritdoc cref="ISaveFile{TData}"/>
 public class SaveFile<TData> : ISaveFile<TData> where TData : class
 {
+  internal static class Suppressions
+  {
+    public static class IDE0370
+    {
+      public const string CATEGORY = "Style";
+      public const string CHECK_ID = "IDE0370:Remove unnecessary suppression";
+      public const string JUSTIFICATION = "Suppression required for compatibility with .net standard 2.1.";
+    }
+  }
+
   /// <inheritdoc cref="ISaveFile{TData}.Root"/>
   public ISaveChunk<TData> Root { get; }
 
   /// <inheritdoc />
 #if NET5_0_OR_GREATER
-  [System.Diagnostics.CodeAnalysisMemberNotNullWhen(true, nameof(_io), nameof(_serializer))]
+  [MemberNotNullWhen(true, nameof(_io), nameof(_serializer))]
 #endif
   public bool CanSaveSynchronously => _io is not null && _serializer is not null;
 
@@ -143,6 +154,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   { }
 
   /// <inheritdoc />
+  [SuppressMessage(Suppressions.IDE0370.CATEGORY, Suppressions.IDE0370.CHECK_ID, Justification = Suppressions.IDE0370.JUSTIFICATION)]
   public void Save(CompressionLevel compressionLevel = default)
   {
     if (!CanSaveSynchronously)
@@ -156,6 +168,7 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
   }
 
   /// <inheritdoc />
+  [SuppressMessage(Suppressions.IDE0370.CATEGORY, Suppressions.IDE0370.CHECK_ID, Justification = Suppressions.IDE0370.JUSTIFICATION)]
   public void Load()
   {
     if (!CanSaveSynchronously)
@@ -271,6 +284,10 @@ public class SaveFile<TData> : ISaveFile<TData> where TData : class
 public static class SaveFile
 {
   /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses JSON serialization and GZip compression.</summary>
+#if NET8_0_OR_GREATER
+  [RequiresUnreferencedCode(JsonStreamSerializer.Messages.REQUIRES_UNREFERENCED_CODE)]
+  [RequiresDynamicCode(JsonStreamSerializer.Messages.REQUIRES_DYNAMIC_CODE)]
+#endif
   public static SaveFile<TData> CreateGZipJsonFile<TData>(ISaveChunk<TData> root, string filePath, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
     io: new FileStreamIO(filePath),
@@ -295,6 +312,10 @@ public static class SaveFile
   );
 
   /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses the specified io, JSON serialization and GZip compression.</summary>
+#if NET8_0_OR_GREATER
+  [RequiresUnreferencedCode(JsonStreamSerializer.Messages.REQUIRES_UNREFERENCED_CODE)]
+  [RequiresDynamicCode(JsonStreamSerializer.Messages.REQUIRES_DYNAMIC_CODE)]
+#endif
   public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IStreamIO io, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
     io: io,
@@ -319,6 +340,10 @@ public static class SaveFile
   );
 
   /// <summary>Creates a new <see cref="SaveFile{TData}"/> that uses the specified io, JSON serialization and GZip compression.</summary>
+#if NET8_0_OR_GREATER
+  [RequiresUnreferencedCode(JsonStreamSerializer.Messages.REQUIRES_UNREFERENCED_CODE)]
+  [RequiresDynamicCode(JsonStreamSerializer.Messages.REQUIRES_DYNAMIC_CODE)]
+#endif
   public static SaveFile<TData> CreateGZipJsonIO<TData>(ISaveChunk<TData> root, IAsyncStreamIO asyncIO, JsonSerializerOptions? options = null) where TData : class => new(
     root: root,
     asyncIO: asyncIO,

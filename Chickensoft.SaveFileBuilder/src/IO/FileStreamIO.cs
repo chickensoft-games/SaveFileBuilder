@@ -29,6 +29,11 @@ public class FileStreamIO : IStreamIO
   public Stream Write()
   {
     FileInfo.Refresh();
+    if (FileInfo.DirectoryName is null)
+    {
+      throw new DirectoryNotFoundException("The directory of the file does not exist.");
+    }
+
     Directory.CreateDirectory(FileInfo.DirectoryName);
     return FileInfo.Open(FileMode.OpenOrCreate, FileAccess.Write);
   }

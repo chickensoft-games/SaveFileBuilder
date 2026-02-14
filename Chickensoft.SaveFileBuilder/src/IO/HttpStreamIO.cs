@@ -132,7 +132,11 @@ public class HttpStreamIO : IAsyncStreamIO, IDisposable
       return new MemoryStream();
     }
 
+#if NET5_0_OR_GREATER
+    await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+#else
     await using var contentStream = await response.Content.ReadAsStreamAsync();
+#endif
 
     var readStream = new MemoryStream();
     await contentStream.CopyToAsync(readStream, cancellationToken);
