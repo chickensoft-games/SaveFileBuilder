@@ -55,7 +55,10 @@ jobs:
         id: next-version
         with:
           project-version: ${{ steps.current-version.outputs.tag }}
-          godot-version: global.json
+          # This action was designed to pin versions to Godot versions, but
+          # if you pass a stable version in it just bumps the project version
+          # that you give it.
+          godot-version: 1.0.0
           bump: ${{ inputs.bump }}
 
       - uses: actions/setup-dotnet@v5

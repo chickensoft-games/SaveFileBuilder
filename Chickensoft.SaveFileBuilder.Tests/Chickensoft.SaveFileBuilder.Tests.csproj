@@ -1,7 +1,7 @@
-<Project Sdk="Godot.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <LangVersion>preview</LangVersion>
@@ -20,13 +20,26 @@
 
   <ItemGroup>
     <!-- Test executor. -->
-    <PackageReference Include="Chickensoft.GoDotTest" Version="2.0.30" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="6.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Moq" Version="4.20.72" />
     <!-- Assertions library. -->
-    <PackageReference Include="Shouldly" Version="4.3.0" />
     <!-- Generated mocks. -->
-    <PackageReference Include="LightMock.Generator" Version="1.2.3" />
     <!-- Convenience wrapper around generated mocks. -->
-    <PackageReference Include="LightMoq" Version="0.1.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Moq" />
   </ItemGroup>
 
   <ItemGroup>

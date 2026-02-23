@@ -1,95 +1,93 @@
 namespace Chickensoft.SaveFileBuilder.Tests;
 
-using System.Threading.Tasks;
-using Chickensoft.GoDotTest;
-using Godot;
-using Shouldly;
-
-public class SaveChunkTest(Node testScene) : TestClass(testScene)
+public class SaveChunkTest
 {
-  private sealed record SaveData { }
+  public string ChunkData { get; set; }
+  public SaveChunk<string> Chunk { get; set; }
+  public string ChildChunkData { get; set; }
+  public SaveChunk<string> ChildChunk { get; set; }
 
-  [Test]
-  public void SavesAndLoads()
+  public SaveChunkTest()
   {
-    var onSave = Task.CompletedTask;
-    var data = new SaveData();
-
-    var loaded = false;
-
-    var saveChunk = new SaveChunk<SaveData>(
-      onSave: (chunk) => data,
-      onLoad: (chunk, data) => loaded = true
+    ChunkData = string.Empty;
+    Chunk = new SaveChunk<string>(
+      onSave: (chunk) => ChunkData,
+      onLoad: (chunk, data) => ChunkData = data
     );
-
-    saveChunk.ShouldNotBeNull();
-
-    saveChunk.GetSaveData().ShouldBeSameAs(data);
-    saveChunk.LoadSaveData(data);
-    loaded.ShouldBeTrue();
+    ChildChunkData = string.Empty;
+    ChildChunk = new SaveChunk<string>(
+      onSave: (chunk) => ChildChunkData,
+      onLoad: (chunk, data) => ChildChunkData = data
+      );
   }
 
-  [Test]
-  public void AddsAndGetsChunk()
+  [Fact]
+  public void GetSaveData_ReturnsChunkData()
   {
-    var onSave = Task.CompletedTask;
-    var data = new SaveData();
-
-    var saveChunk = new SaveChunk<SaveData>(
-      onSave: (chunk) => data,
-      onLoad: (chunk, data) => { }
-    );
-
-    var childLoaded = false;
-    var childData = new SaveData();
-    var child = new SaveChunk<SaveData>(
-      onSave: (chunk) => childData,
-      onLoad: (chunk, data) => childLoaded = true
-    );
-
-    saveChunk.AddChunk(child);
-
-    var childChunk = saveChunk.GetChunk<SaveData>();
-
-    childChunk.ShouldBeSameAs(child);
-
-    saveChunk.GetChunkSaveData<SaveData>().ShouldBeSameAs(childData);
-    saveChunk.LoadChunkSaveData(childData);
-    childLoaded.ShouldBeTrue();
+    ChunkData = "test";
+    Assert.Equal("test", Chunk.GetSaveData());
   }
 
-  [Test]
-  public void OverwritesAndGetsChunk()
+  [Fact]
+  public void LoadSaveData_SetsChunkData()
   {
-    var onSave = Task.CompletedTask;
-    var data = new SaveData();
+    Chunk.LoadSaveData("test");
+    Assert.Equal("test", ChunkData);
+  }
 
-    var saveChunk = new SaveChunk<SaveData>(
-      onSave: (chunk) => data,
-      onLoad: (chunk, data) => { }
-    );
+  [Fact]
+  public void AddChunk_DoesNotThrow()
+  {
+    var exception = Record.Exception(() => Chunk.AddChunk(ChildChunk));
+    Assert.Null(exception);
+  }
 
-    var childData = new SaveData();
-    var child = new SaveChunk<SaveData>(
-      onSave: (chunk) => childData,
-      onLoad: (chunk, data) => { }
-    );
+  [Fact]
+  public void GetChunk_ReturnsAddedChunk()
+  {
+    Chunk.AddChunk(ChildChunk);
+    Assert.True(ReferenceEquals(ChildChunk, Chunk.GetChunk<string>()));
+  }
 
-    var otherChildData = new SaveData();
-    var otherChild = new SaveChunk<SaveData>(
-      onSave: (chunk) => otherChildData,
-      onLoad: (chunk, data) => { }
-    );
+  [Fact]
+  public void GetChunkSaveData_ReturnsChildChunkData()
+  {
+    Chunk.AddChunk(ChildChunk);
+    ChildChunkData = "child test";
+    Assert.Equal("child test", Chunk.GetChunkSaveData<string>());
+  }
 
-    saveChunk.AddChunk(child);
-    saveChunk.OverwriteChunk(otherChild);
+  [Fact]
+  public void LoadChunkSaveData_SetsChildChunkData()
+  {
+    Chunk.AddChunk(ChildChunk);
+    Chunk.LoadChunkSaveData("child test");
+    Assert.Equal("child test", ChildChunkData);
+  }
 
-    var childChunk = saveChunk.GetChunk<SaveData>();
+  [Fact]
+  public void AddDuplicateChunk_ThrowsException()
+  {
+    Chunk.AddChunk(ChildChunk);
+    var exception = Record.Exception(() => Chunk.AddChunk(It.IsAny<ISaveChunk<string>>()));
+    Assert.NotNull(exception);
+  }
 
-    childChunk.ShouldNotBeSameAs(child);
-    childChunk.ShouldBeSameAs(otherChild);
+  [Fact]
+  public void OverwriteChunk_WithoutExistingChunk_AddsChunk()
+  {
+    Chunk.OverwriteChunk(ChildChunk);
+    Assert.True(ReferenceEquals(ChildChunk, Chunk.GetChunk<string>()));
+  }
 
-    saveChunk.GetChunkSaveData<SaveData>().ShouldNotBeSameAs(childData);
-    saveChunk.GetChunkSaveData<SaveData>().ShouldBeSameAs(otherChildData);
+  [Fact]
+  public void OverwriteChunk_WithExistingChunk_UpdatesExistingChunk()
+  {
+    var mockChunk = It.IsAny<ISaveChunk<string>>();
+
+    Chunk.AddChunk(ChildChunk);
+    Chunk.OverwriteChunk(mockChunk);
+
+    Assert.True(ReferenceEquals(mockChunk, Chunk.GetChunk<string>()));
   }
 }

@@ -2,15 +2,13 @@
 
 [![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] [![Read the docs][read-the-docs-badge]][docs] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
-Compose chunks of save data into a single data type by creating loosely coupled save chunks at various points in the scene tree.
-
----
+Compose chunks of save data into a single data type by creating loosely coupled save chunks at various points in your application.
 
 <p align="center">
 <img alt="Chickensoft.SaveFileBuilder" src="Chickensoft.SaveFileBuilder/icon.png" width="200">
 </p>
 
-## 🥚 Getting Started
+## 🥚 Installation
 
 Find the latest version of [`Chickensoft.SaveFileBuilder`][nuget] on nuget.
 
@@ -18,12 +16,217 @@ Find the latest version of [`Chickensoft.SaveFileBuilder`][nuget] on nuget.
 dotnet add package Chickensoft.SaveFileBuilder
 ```
 
-## 📄 SaveFile and Root SaveChunk
+## :hatching_chick: Quick Start
 
-Find the highest node in your scene tree that needs to be concerned with save data to use as the root of your save file. Use [AutoInject] to provide the root save chunk to all its descendant nodes.
+```csharp
+// Define your (serializable!) save data
+public class UserData
+{
+  public string Name { get; set; }
+  public DateTime Birthday { get; set; }
+}
+
+// Define your class responsible for saving and loading.
+public class User
+{
+  public string Name { get; set; }
+  public string Birthday { get; set; }
+
+  public SaveFile<UserData> SaveFile { get; }
+  public ISaveChunk<UserData> SaveChunk { get; }
+
+  public User()
+  {
+    // Define your saving and loading behavior at the start, and never again!
+    SaveChunk = new SaveChunk<UserData>(
+      onSave: (chunk) => new UserData()
+      {
+        Name = Name,
+        Birthday = Birthday
+      },
+      onLoad: (chunk, data) =>
+      {
+        Name = data.Name;
+        Birthday = data.Birthday;
+      }
+    );
+
+    // Let SaveFile take care of the rest.
+    SaveFile = SaveFile.CreateGZipJsonFile(SaveChunk, "savefile.json.gz");
+  }
+
+  public Task OnSave() => SaveFile.SaveAsync();
+  public Task OnLoad() => SaveFile.LoadAsync();
+}
+```
 
 > [!TIP]
-> Check out the Chickensoft [Game Demo] for a complete, working example of using SaveFileBuilder to save composed states of everything that needs to be persisted in a game.
+> You can define easily serializable types with [Chickensoft.Serialization].
+
+## 🍪 Save Chunks & Modularity
+
+SaveChunks are smaller pieces of save data that are composed together into the overall save file.
+
+```csharp
+// User data contains preferences data separately.
+public class UserData
+{
+  public string Name { get; set; }
+  public DateTime Birthday { get; set; }
+  public PreferencesData Preferences { get; set; }
+}
+
+// This allows us to keep our save data and -logic modular.
+public class PreferencesData
+{
+  public bool IsDarkMode { get; set; }
+  public string Language { get; set; }
+}
+```
+
+This modularity allows us to separate concerns when saving and loading data. The `User` class is only concerned with user data, while the `UserPreferences` class is only concerned with preferences data.
+
+We can link our save chunks together using:
+- `GetChunkSaveData` to retrieve child chunk data during save.
+- `LoadChunkSaveData` to load child chunk data during load.
+- `AddChunk` to compose our save data.
+
+```csharp
+// Handle user logic.
+public class User
+{
+  public string Name { get; set; }
+  public DateTime Birthday { get; set; }
+
+  public ISaveChunk<UserData> SaveChunk { get; }
+
+  public User()
+  {
+    // Define our user chunk with a nested preferences chunk.
+    SaveChunk = new SaveChunk<UserData>(
+      onSave: (chunk) => new UserData()
+      {
+        Name = Name,
+        Birthday = Birthday,
+        Preferences = chunk.GetChunkSaveData<PreferencesData>()
+      },
+      onLoad: (chunk, data) =>
+      {
+        Name = data.Name;
+        Birthday = data.Birthday;
+        chunk.LoadChunkSaveData(data.Preferences);
+      }
+    );
+  }
+}
+
+// Handle preferences logic.
+public class UserPreferences
+{
+  public bool IsDarkMode { get; set; }
+  public string Language { get; set; }
+
+  public ISaveChunk<PreferencesData> SaveChunk { get; }
+
+  public UserPreferences(User user)
+  {
+    // Define our preferences chunk.
+    SaveChunk = new SaveChunk<PreferencesData>(
+      onSave: (chunk) => new PreferencesData()
+      {
+        IsDarkMode = IsDarkMode,
+        Language = Language
+      },
+      onLoad: (chunk, data) =>
+      {
+        IsDarkMode = data.IsDarkMode;
+        Language = data.Language;
+      }
+    );
+
+    // Add our preferences chunk as a child of the user chunk.
+    user.SaveChunk.AddChunk(SaveChunk);
+  }
+}
+```
+
+## :floppy_disk: SaveFile & Flexibility
+
+> [!TIP]
+> If you just want to save some data to a file, call the following: `SaveFile.CreateGZipJsonFile(Root, "savefile.json.gz");`
+
+Saving a file involves 2 to 3 steps:
+- input / output (io)
+- serialization
+- (preferably) compression
+
+SaveFile handles these steps for you, and optimally at that! By using [Streams] under the hood, SaveFile can efficiently save and load data without unnecessary memory allocations.
+
+But the :zap: REAL POWER :zap: of SaveFile comes from its flexibility. You can define your own IO providers, compression algorithms, and serialization formats by implementing the relevant interfaces:
+- IStreamIO / IAsyncStreamIO for io
+- IStreamSerializer / IAsyncStreamSerializer for serialization
+- IStreamCompressor for compression
+
+```csharp
+public class AzureStreamIO : IAsyncStreamIO
+{
+  public Stream ReadAsync() => //...
+  public void WriteAsync(Stream stream) => //...
+  public bool ExistsAsync() => //...
+  public bool DeleteAsync() => //...
+}
+
+public class YamlStreamSerializer : IStreamSerializer
+{
+  public void Serialize(Stream stream, object? value, Type inputType) => //...
+  public object? Deserialize(Stream stream, Type returnType) => //...
+}
+
+public class SnappyStreamCompressor : IStreamCompressor
+{
+  public Stream Compress(Stream stream, CompressionLevel compressionLevel, bool leaveOpen) => //...
+  public Stream Decompress(Stream stream, bool leaveOpen) => //...
+}
+```
+
+You can then provide them to your SaveFile and mix- and match them with existing types.
+
+```csharp
+public class App
+{
+  SaveFile<AzureData> AzureSaveFile { get; set; }
+  SaveFile<LocalData> LocalSaveFile { get; set; }
+
+  public void Save()
+  {
+    // Define a SaveChunk<AzureData> AzureChunk
+    // Define a SaveChunk<LocalData> LocalChunk
+
+    AzureSaveFile = new
+    (
+      root: AzureChunk, 
+      asyncIO: new AzureStreamIO(), 
+      serializer: new JsonStreamSerializer(), 
+      compressor: new SnappyStreamCompressor()
+    );
+
+    LocalSaveFile = new
+    (
+      root: LocalChunk, 
+      io: new FileStreamIO(), 
+      serializer: new YamlStreamSerializer(), 
+      compressor: new BrotliStreamCompressor()
+    );
+  }
+}
+```
+
+> [!NOTE]
+> If you write your own implementations of these interfaces, consider contributing them back to the Chickensoft community by opening a PR!
+
+## <img src="Chickensoft.SaveFileBuilder/godot-icon.png" width="24" /> Usage in Godot
+
+Using [Introspection] and [AutoInject], you can link chunks together in Godot by providing- and accessing dependencies in your scene tree. Mark the relevant nodes as `IAutoNode`'s, provide dependencies from parent nodes, and access them in child nodes. 
 
 ```csharp
 using Chickensoft.Introspection;
@@ -31,6 +234,7 @@ using Chickensoft.AutoInject;
 using Chickensoft.SaveFileBuilder;
 using Godot;
 
+// Game is the root node in the scene. It provides the dependency to descendant nodes.
 [Meta(typeof(IAutoNode))]
 public partial class Game : Node3D
 {
@@ -41,58 +245,12 @@ public partial class Game : Node3D
 
   public void Setup()
   {
-    SaveFile = new SaveFile<GameData>(
-      root: new SaveChunk<GameData>(
-        onSave: (chunk) => {
-          // Use root chunk to get child chunks that were added to us
-          // lower in the scene tree.
-          var gameData = new GameData()
-          {
-            MapData = chunk.GetChunkSaveData<MapData>(),
-            PlayerData = chunk.GetChunkSaveData<PlayerData>(),
-            PlayerCameraData = chunk.GetChunkSaveData<PlayerCameraData>()
-          };
-
-          return gameData;
-        },
-        onLoad: (chunk, data) =>
-        {
-          // Break up the game data and send it to the child chunks so that
-          // they can load the data into the nodes they belong to.
-          chunk.LoadChunkSaveData(data.MapData);
-          chunk.LoadChunkSaveData(data.PlayerData);
-          chunk.LoadChunkSaveData(data.PlayerCameraData);
-        }
-      ),
-      onSave: async (GameData data) =>
-      {
-        // Save the game data to disk.
-        var json = JsonSerializer.Serialize(data, JsonOptions);
-        await FileSystem.File.WriteAllTextAsync(SaveFilePath, json);
-      },
-      onLoad: async () =>
-      {
-        // Load the game data from disk.
-        if (!FileSystem.File.Exists(SaveFilePath)) {
-          GD.Print("No save file to load :'(");
-          return null;
-        }
-
-        var json = await FileSystem.File.ReadAllTextAsync(SaveFilePath);
-        return JsonSerializer.Deserialize<GameData>(json, JsonOptions);
-      }
-    );
-
-    ...
+    var root = new SaveChunk<GameData>(onSave: ..., onLoad: ...);
+    SaveFile = SaveFile.CreateGZipJsonFile(root, SaveFilePath, JsonOptions);
   }
 }
-```
 
-## 🍪 Defining Save Chunks
-
-SaveChunks are smaller pieces of save data that are composed together into the overall save file's data. Simply add a chunk to a descendant node of the scene with the root SaveChunk and register it with the root save chunk once you've resolved dependencies with AutoInject.
-
-```csharp
+// Player is a child node of the Game node. It accesses the dependency provided by the Game class.
 [Meta(typeof(IAutoNode))]
 public partial class Player : CharacterBody3D
 {
@@ -100,15 +258,18 @@ public partial class Player : CharacterBody3D
   public ISaveChunk<GameData> GameChunk => this.DependOn<ISaveChunk<GameData>>();
   public ISaveChunk<PlayerData> PlayerChunk { get; set; } = default!;
 
+  // Player uses a StateMachine, or LogicBlock, to handle its state.
+  public IPlayerLogic PlayerLogic { get; set; } = default!;
+
   public void Setup()
   {
-    ...
+    PlayerLogic = new PlayerLogic();
 
     PlayerChunk = new SaveChunk<PlayerData>(
       onSave: (chunk) => new PlayerData()
       {
         GlobalTransform = GlobalTransform,
-        StateMachine = (PlayerLogic)PlayerLogic,
+        StateMachine = PlayerLogic,
         Velocity = Velocity
       },
       onLoad: (chunk, data) =>
@@ -119,8 +280,6 @@ public partial class Player : CharacterBody3D
         PlayerLogic.Start();
       }
     );
-
-    ...
   }
 
   public void OnResolved()
@@ -128,16 +287,15 @@ public partial class Player : CharacterBody3D
     // Add a child to our parent save chunk (the game chunk) so that it can
     // look up the player chunk when loading and saving the game.
     GameChunk.AddChunk(PlayerChunk);
-
-    ...
   }
 }
 ```
 
-Once a save chunk has been added to a parent save chunk, the parent save chunk can access it from the callbacks specified by `onSave` and `onLoad`, querying its data or forcing it load data into its node.
+> [!TIP]
+> You can easily serialize entire [LogicBlocks] with [Chickensoft.Serialization].
 
 > [!TIP]
-> You can define easily serializable types, as well as serialize entire [LogicBlocks] with [Chickensoft.Serialization].
+> Check out the Chickensoft [Game Demo] for a complete, working example of using SaveFileBuilder to save composed states of everything that needs to be persisted in a game.
 
 ---
 
@@ -152,8 +310,11 @@ Once a save chunk has been added to a parent save chunk, the parent save chunk c
 [line-coverage]: Chickensoft.SaveFileBuilder.Tests/badges/line_coverage.svg
 [branch-coverage]: Chickensoft.SaveFileBuilder.Tests/badges/branch_coverage.svg
 
+[Introspection]: https://github.com/chickensoft-games/Introspection
 [AutoInject]: https://github.com/chickensoft-games/AutoInject
 [Game Demo]: https://github.com/chickensoft-games/GameDemo
 [LogicBlocks]: https://github.com/chickensoft-games/LogicBlocks
 [Chickensoft.Serialization]: https://github.com/chickensoft-games/Serialization
 [nuget]: https://www.nuget.org/packages/Chickensoft.SaveFileBuilder
+
+[Streams]: https://learn.microsoft.com/en-us/dotnet/api/system.io.stream]
