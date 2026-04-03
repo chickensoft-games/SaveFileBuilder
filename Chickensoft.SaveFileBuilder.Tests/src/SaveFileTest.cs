@@ -1,15 +1,13 @@
 namespace Chickensoft.SaveFileBuilder.Tests;
 
 using System.Threading.Tasks;
-using Chickensoft.GoDotTest;
-using Godot;
 using Shouldly;
 
-public class SaveFileTest(Node testScene) : TestClass(testScene)
+public class SaveFileTest()
 {
   private sealed record SaveData { }
 
-  [Test]
+  [Fact]
   public async Task SavesAndLoads()
   {
     var onSave = Task.CompletedTask;
@@ -31,7 +29,7 @@ public class SaveFileTest(Node testScene) : TestClass(testScene)
     });
   }
 
-  [Test]
+  [Fact]
   public async Task DoesNotLoadIfNull()
   {
     var onSave = Task.CompletedTask;

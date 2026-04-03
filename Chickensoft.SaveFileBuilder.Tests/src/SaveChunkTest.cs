@@ -1,15 +1,13 @@
 namespace Chickensoft.SaveFileBuilder.Tests;
 
 using System.Threading.Tasks;
-using Chickensoft.GoDotTest;
-using Godot;
 using Shouldly;
 
-public class SaveChunkTest(Node testScene) : TestClass(testScene)
+public class SaveChunkTest()
 {
   private sealed record SaveData { }
 
-  [Test]
+  [Fact]
   public void SavesAndLoads()
   {
     var onSave = Task.CompletedTask;
@@ -29,7 +27,7 @@ public class SaveChunkTest(Node testScene) : TestClass(testScene)
     loaded.ShouldBeTrue();
   }
 
-  [Test]
+  [Fact]
   public void AddsAndGetsChunk()
   {
     var onSave = Task.CompletedTask;
@@ -58,7 +56,7 @@ public class SaveChunkTest(Node testScene) : TestClass(testScene)
     childLoaded.ShouldBeTrue();
   }
 
-  [Test]
+  [Fact]
   public void OverwritesAndGetsChunk()
   {
     var onSave = Task.CompletedTask;
