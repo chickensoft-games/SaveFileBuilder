@@ -2,92 +2,226 @@ namespace Chickensoft.SaveFileBuilder.Tests;
 
 public class SaveChunkTest
 {
-  public string ChunkData { get; set; }
-  public SaveChunk<string> Chunk { get; set; }
-  public string ChildChunkData { get; set; }
-  public SaveChunk<string> ChildChunk { get; set; }
+  public SaveChunk<TestData> Chunk { get; set; }
 
   public SaveChunkTest()
   {
-    ChunkData = string.Empty;
-    Chunk = new SaveChunk<string>(
-      onSave: (chunk) => ChunkData,
-      onLoad: (chunk, data) => ChunkData = data
-    );
-    ChildChunkData = string.Empty;
-    ChildChunk = new SaveChunk<string>(
-      onSave: (chunk) => ChildChunkData,
-      onLoad: (chunk, data) => ChildChunkData = data
-      );
+    Chunk = new SaveChunk<TestData>();
   }
 
   [Fact]
-  public void GetSaveData_ReturnsChunkData()
+  public void Constructor_CreatesInstance()
   {
-    ChunkData = "test";
-    Assert.Equal("test", Chunk.GetSaveData());
+    var chunk = new SaveChunk<TestData>();
+    Assert.NotNull(chunk);
   }
 
   [Fact]
-  public void LoadSaveData_SetsChunkData()
+  public void Save_ReturnsNewDataInstance()
   {
-    Chunk.LoadSaveData("test");
-    Assert.Equal("test", ChunkData);
+    var data = Chunk.Save();
+    Assert.NotNull(data);
+    Assert.IsType<TestData>(data);
   }
 
   [Fact]
-  public void AddChunk_DoesNotThrow()
+  public void Save_InvokesOnSaveCallback()
   {
-    var exception = Record.Exception(() => Chunk.AddChunk(ChildChunk));
+    // Arrange
+    TestData? savedData = null;
+    Chunk.Bind().OnSave(data => savedData = data);
+
+    // Act
+    var result = Chunk.Save();
+
+    // Assert
+    Assert.NotNull(savedData);
+    Assert.Same(result, savedData);
+  }
+
+  [Fact]
+  public void Save_DataModifiedInCallback_ReflectedInReturnValue()
+  {
+    // Arrange
+    Chunk.Bind().OnSave(data => data.Name = "modified");
+
+    // Act
+    var result = Chunk.Save();
+
+    // Assert
+    Assert.Equal("modified", result.Name);
+  }
+
+  [Fact]
+  public void Load_InvokesOnLoadCallback()
+  {
+    // Arrange
+    TestData? loadedData = null;
+    Chunk.Bind().OnLoad(data => loadedData = data);
+
+    var dataToLoad = new TestData { Name = "test", Value = 42 };
+
+    // Act
+    Chunk.Load(dataToLoad);
+
+    // Assert
+    Assert.NotNull(loadedData);
+    Assert.Same(dataToLoad, loadedData);
+  }
+
+  [Fact]
+  public void Bind_ReturnsBinding()
+  {
+    var binding = Chunk.Bind();
+    Assert.NotNull(binding);
+  }
+
+  [Fact]
+  public void ClearBindings_StopsOnSaveCallbackFromBeingInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++);
+
+    // Act
+    Chunk.ClearBindings();
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(0, callCount);
+  }
+
+  [Fact]
+  public void ClearBindings_StopsOnLoadCallbackFromBeingInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++);
+
+    // Act
+    Chunk.ClearBindings();
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(0, callCount);
+  }
+
+  [Fact]
+  public void Dispose_DoesNotThrow()
+  {
+    var exception = Record.Exception(Chunk.Dispose);
     Assert.Null(exception);
   }
 
   [Fact]
-  public void GetChunk_ReturnsAddedChunk()
+  public void OnSave_WithTrueCondition_InvokesCallback()
   {
-    Chunk.AddChunk(ChildChunk);
-    Assert.True(ReferenceEquals(ChildChunk, Chunk.GetChunk<string>()));
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++, _ => true);
+
+    // Act
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(1, callCount);
   }
 
   [Fact]
-  public void GetChunkSaveData_ReturnsChildChunkData()
+  public void OnSave_WithFalseCondition_DoesNotInvokeCallback()
   {
-    Chunk.AddChunk(ChildChunk);
-    ChildChunkData = "child test";
-    Assert.Equal("child test", Chunk.GetChunkSaveData<string>());
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++, _ => false);
+
+    // Act
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(0, callCount);
   }
 
   [Fact]
-  public void LoadChunkSaveData_SetsChildChunkData()
+  public void OnLoad_WithTrueCondition_InvokesCallback()
   {
-    Chunk.AddChunk(ChildChunk);
-    Chunk.LoadChunkSaveData("child test");
-    Assert.Equal("child test", ChildChunkData);
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++, _ => true);
+
+    // Act
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(1, callCount);
   }
 
   [Fact]
-  public void AddDuplicateChunk_ThrowsException()
+  public void OnLoad_WithFalseCondition_DoesNotInvokeCallback()
   {
-    Chunk.AddChunk(ChildChunk);
-    var exception = Record.Exception(() => Chunk.AddChunk(It.IsAny<ISaveChunk<string>>()));
-    Assert.NotNull(exception);
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++, _ => false);
+
+    // Act
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(0, callCount);
   }
 
   [Fact]
-  public void OverwriteChunk_WithoutExistingChunk_AddsChunk()
+  public void OnSave_ReturnsBinding_ForMethodChaining()
   {
-    Chunk.OverwriteChunk(ChildChunk);
-    Assert.True(ReferenceEquals(ChildChunk, Chunk.GetChunk<string>()));
+    // Arrange
+    var binding = Chunk.Bind();
+
+    // Act
+    var result = binding.OnSave(_ => { });
+
+    // Assert
+    Assert.Same(binding, result);
   }
 
   [Fact]
-  public void OverwriteChunk_WithExistingChunk_UpdatesExistingChunk()
+  public void OnLoad_ReturnsBinding_ForMethodChaining()
   {
-    var mockChunk = It.IsAny<ISaveChunk<string>>();
+    // Arrange
+    var binding = Chunk.Bind();
 
-    Chunk.AddChunk(ChildChunk);
-    Chunk.OverwriteChunk(mockChunk);
+    // Act
+    var result = binding.OnLoad(_ => { });
 
-    Assert.True(ReferenceEquals(mockChunk, Chunk.GetChunk<string>()));
+    // Assert
+    Assert.Same(binding, result);
+  }
+
+  [Fact]
+  public void MultipleBindings_AllOnSaveCallbacksInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++);
+    Chunk.Bind().OnSave(_ => callCount++);
+
+    // Act
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(2, callCount);
+  }
+
+  [Fact]
+  public void MultipleBindings_AllOnLoadCallbacksInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++);
+    Chunk.Bind().OnLoad(_ => callCount++);
+
+    // Act
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(2, callCount);
   }
 }

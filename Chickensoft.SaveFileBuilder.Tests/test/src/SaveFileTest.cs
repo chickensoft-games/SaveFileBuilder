@@ -11,9 +11,7 @@ public class SaveFileTest
   public Mock<IStreamSerializer> MockSerializer { get; set; }
   public Mock<IStreamCompressor> MockCompressor { get; set; }
 
-  public Mock<ISaveChunk<string>> MockChunk { get; set; }
-
-  public SaveFile<string> SaveFile { get; set; }
+  public SaveFile SaveFile { get; set; }
 
   public SaveFileTest()
   {
@@ -21,9 +19,7 @@ public class SaveFileTest
     MockSerializer = new Mock<IStreamSerializer>();
     MockCompressor = new Mock<IStreamCompressor>();
 
-    MockChunk = new Mock<ISaveChunk<string>>();
-
-    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, MockCompressor.Object);
+    SaveFile = new SaveFile(MockIO.Object, MockSerializer.Object, MockCompressor.Object);
   }
 
   [Fact]
@@ -36,16 +32,14 @@ public class SaveFileTest
     var io = new MemoryStream();
     var compressionStream = new MemoryStream();
 
-    MockChunk.Setup(chunk => chunk.GetSaveData()).Returns("test").Verifiable();
     MockIO.Setup(io => io.Write()).Returns(io).Verifiable();
     MockCompressor.Setup(compressor => compressor.Compress(io, default, false)).Returns(compressionStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Serialize(compressionStream, "test", typeof(string))).Verifiable();
 
     // Act
-    SaveFile.Save();
+    SaveFile.Save("test");
 
     // Assert
-    MockChunk.Verify();
     MockIO.Verify();
     MockCompressor.Verify();
     MockSerializer.Verify();
@@ -55,18 +49,16 @@ public class SaveFileTest
   public void Save_CompressorIsNull_WritesAndSerializesWithoutCompressing()
   {
     // Arrange
-    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, null);
+    SaveFile = new SaveFile(MockIO.Object, MockSerializer.Object, null);
 
     var ioStream = new MemoryStream();
-    MockChunk.Setup(chunk => chunk.GetSaveData()).Returns("test").Verifiable();
     MockIO.Setup(io => io.Write()).Returns(ioStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Serialize(ioStream, "test", typeof(string))).Verifiable();
 
     // Act
-    SaveFile.Save();
+    SaveFile.Save("test");
 
     // Assert
-    MockChunk.Verify();
     MockIO.Verify();
     MockSerializer.Verify();
   }
@@ -94,51 +86,48 @@ public class SaveFileTest
     MockIO.Setup(io => io.Read()).Returns(ioStream).Verifiable();
     MockCompressor.Setup(compressor => compressor.Decompress(ioStream, false)).Returns(compressionStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Deserialize(compressionStream, typeof(string))).Returns("test").Verifiable();
-    MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
 
     // Act
-    SaveFile.Load();
+    var data = SaveFile.Load<string>();
 
     // Assert
     MockIO.Verify();
     MockCompressor.Verify();
     MockSerializer.Verify();
-    MockChunk.Verify();
+    Assert.Equal("test", data);
   }
 
   [Fact]
   public void Load_CompressorIsNull_ReadsAndDeserializesWithoutDecompressing()
   {
     // Arrange
-    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, null);
+    SaveFile = new SaveFile(MockIO.Object, MockSerializer.Object, null);
 
     var ioStream = new MemoryStream();
     MockIO.Setup(io => io.Read()).Returns(ioStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Deserialize(ioStream, typeof(string))).Returns("test").Verifiable();
-    MockChunk.Setup(chunk => chunk.LoadSaveData("test")).Verifiable();
 
     // Act
-    SaveFile.Load();
+    var data = SaveFile.Load<string>();
 
     // Assert
     MockIO.Verify();
     MockSerializer.Verify();
-    MockChunk.Verify();
+    Assert.Equal("test", data);
   }
 
   [Fact]
   public void Load_DataIsNull_DoesNotSetChunkData()
   {
     // Arrange
-    MockSerializer.Setup(serializer => serializer.Deserialize(It.IsAny<Stream>(), It.IsAny<Type>())).Returns((string?)null).Verifiable();
-    MockChunk.Setup(chunk => chunk.LoadSaveData(It.IsAny<string>())).Verifiable(Times.Never);
+    MockSerializer.Setup(serializer => serializer.Deserialize(It.IsAny<Stream>(), It.IsAny<Type>())).Returns((object?)null).Verifiable();
 
     // Act
-    SaveFile.Load();
+    var data = SaveFile.Load<string>();
 
     // Assert
     MockSerializer.Verify();
-    MockChunk.Verify();
+    Assert.Null(data);
   }
 
   [Fact]
@@ -171,22 +160,22 @@ public class SaveFileTest
   [Fact]
   public void SaveAsync_CompletedSynchronously()
   {
-    var task = SaveFile.SaveAsync(cancellationToken: TestContext.Current.CancellationToken);
+    var task = SaveFile.SaveAsync("test", cancellationToken: TestContext.Current.CancellationToken);
     Assert.True(task.IsCompletedSuccessfully);
   }
 
   [Fact]
   public void SaveAsync_CompressorIsNull_CompletedSynchronously()
   {
-    SaveFile = new SaveFile<string>(MockChunk.Object, MockIO.Object, MockSerializer.Object, null);
-    var task = SaveFile.SaveAsync(cancellationToken: TestContext.Current.CancellationToken);
+    SaveFile = new SaveFile(MockIO.Object, MockSerializer.Object, null);
+    var task = SaveFile.SaveAsync("test", cancellationToken: TestContext.Current.CancellationToken);
     Assert.True(task.IsCompletedSuccessfully);
   }
 
   [Fact]
   public void LoadAsync_CompletedSynchronously()
   {
-    var task = SaveFile.LoadAsync(TestContext.Current.CancellationToken);
+    var task = SaveFile.LoadAsync<string>(TestContext.Current.CancellationToken);
     Assert.True(task.IsCompletedSuccessfully);
   }
 
