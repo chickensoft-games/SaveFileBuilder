@@ -8,13 +8,11 @@ public partial class SaveFileFactoryTest
 {
   private CancellationToken CancellationToken { get; }
 
-  private Mock<ISaveChunk<TestData>> MockChunk { get; }
   private const string FILE_PATH = "test_save.dat";
 
   public SaveFileFactoryTest(ITestContextAccessor testContextAccessor)
   {
     CancellationToken = testContextAccessor.Current.CancellationToken;
-    MockChunk = new Mock<ISaveChunk<TestData>>();
   }
 
   [Fact]
@@ -24,12 +22,10 @@ public partial class SaveFileFactoryTest
     var options = new JsonSerializerOptions { WriteIndented = true };
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonFile(MockChunk.Object, FILE_PATH, options);
+    var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH, options);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -37,12 +33,10 @@ public partial class SaveFileFactoryTest
   public void CreateGZipJsonFile_WithNullOptions_CreatesValidInstance()
   {
     // Act
-    var saveFile = SaveFile.CreateGZipJsonFile(MockChunk.Object, FILE_PATH);
+    var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -53,12 +47,10 @@ public partial class SaveFileFactoryTest
     var context = TestJsonContext.Default;
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonFile(MockChunk.Object, FILE_PATH, context);
+    var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH, context);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -69,12 +61,10 @@ public partial class SaveFileFactoryTest
     var typeInfo = TestJsonContext.Default.TestData;
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonFile(MockChunk.Object, FILE_PATH, typeInfo);
+    var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH, typeInfo);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -86,12 +76,10 @@ public partial class SaveFileFactoryTest
     var options = new JsonSerializerOptions { WriteIndented = true };
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonIO(MockChunk.Object, mockIO.Object, options);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, options);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -102,12 +90,10 @@ public partial class SaveFileFactoryTest
     var mockIO = new Mock<IStreamIO>();
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonIO(MockChunk.Object, mockIO.Object);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -119,12 +105,10 @@ public partial class SaveFileFactoryTest
     var context = TestJsonContext.Default;
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonIO(MockChunk.Object, mockIO.Object, context);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, context);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -136,12 +120,10 @@ public partial class SaveFileFactoryTest
     var typeInfo = TestJsonContext.Default.TestData;
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonIO(MockChunk.Object, mockIO.Object, typeInfo);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, typeInfo);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.True(saveFile.CanSaveSynchronously);
   }
 
@@ -153,12 +135,10 @@ public partial class SaveFileFactoryTest
     var options = new JsonSerializerOptions { WriteIndented = true };
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonIO(MockChunk.Object, mockAsyncIO.Object, options);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object, options);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.False(saveFile.CanSaveSynchronously);
   }
 
@@ -169,12 +149,10 @@ public partial class SaveFileFactoryTest
     var mockAsyncIO = new Mock<IAsyncStreamIO>();
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonIO(MockChunk.Object, mockAsyncIO.Object);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.False(saveFile.CanSaveSynchronously);
   }
 
@@ -186,12 +164,10 @@ public partial class SaveFileFactoryTest
     var context = TestJsonContext.Default;
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonIO(MockChunk.Object, mockAsyncIO.Object, context);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object, context);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.False(saveFile.CanSaveSynchronously);
   }
 
@@ -203,12 +179,10 @@ public partial class SaveFileFactoryTest
     var typeInfo = TestJsonContext.Default.TestData;
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonFIO(MockChunk.Object, mockAsyncIO.Object, typeInfo);
+    var saveFile = SaveFile.CreateGZipJsonFIO(mockAsyncIO.Object, typeInfo);
 
     // Assert
     Assert.NotNull(saveFile);
-    Assert.NotNull(saveFile.Root);
-    Assert.Equal(MockChunk.Object, saveFile.Root);
     Assert.False(saveFile.CanSaveSynchronously);
   }
 
@@ -218,21 +192,13 @@ public partial class SaveFileFactoryTest
     // Arrange
     var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".dat");
     var data = new TestData { Name = "Hello, World!", Value = 42 };
-    var chunk = new SaveChunk<TestData>(
-      onSave: _ => data,
-      onLoad: (_, loadedData) =>
-      {
-        data.Name = loadedData.Name;
-        data.Value = loadedData.Value;
-      }
-    );
 
     try
     {
-      var saveFile = SaveFile.CreateGZipJsonFile(chunk, tempFile);
+      var saveFile = SaveFile.CreateGZipJsonFile(tempFile);
 
       // Act - Save
-      saveFile.Save();
+      saveFile.Save(data);
 
       // Assert - File exists
       Assert.True(File.Exists(tempFile));
@@ -240,9 +206,10 @@ public partial class SaveFileFactoryTest
       // Act - Load
       data.Name = "Modified";
       data.Value = 0;
-      saveFile.Load();
+      data = saveFile.Load<TestData>();
 
       // Assert - Data restored
+      Assert.NotNull(data);
       Assert.Equal("Hello, World!", data.Name);
       Assert.Equal(42, data.Value);
     }
@@ -262,21 +229,13 @@ public partial class SaveFileFactoryTest
     // Arrange
     var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".dat");
     var data = new TestData { Name = "Async Test", Value = 99 };
-    var chunk = new SaveChunk<TestData>(
-      onSave: _ => data,
-      onLoad: (_, loadedData) =>
-      {
-        data.Name = loadedData.Name;
-        data.Value = loadedData.Value;
-      }
-    );
 
     try
     {
-      var saveFile = SaveFile.CreateGZipJsonFile(chunk, tempFile);
+      var saveFile = SaveFile.CreateGZipJsonFile(tempFile);
 
       // Act - Save
-      await saveFile.SaveAsync(cancellationToken: CancellationToken);
+      await saveFile.SaveAsync(data, cancellationToken: CancellationToken);
 
       // Assert - File exists
       Assert.True(await saveFile.ExistsAsync(CancellationToken));
@@ -284,9 +243,10 @@ public partial class SaveFileFactoryTest
       // Act - Load
       data.Name = "Modified";
       data.Value = 0;
-      await saveFile.LoadAsync(CancellationToken);
+      data = await saveFile.LoadAsync<TestData>(CancellationToken);
 
       // Assert - Data restored
+      Assert.NotNull(data);
       Assert.Equal("Async Test", data.Name);
       Assert.Equal(99, data.Value);
 

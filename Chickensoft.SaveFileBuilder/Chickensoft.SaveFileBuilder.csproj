@@ -47,15 +47,15 @@
 
   <ItemGroup>
     <!-- Dependencies go here. -->
-    <PackageReference Include="Chickensoft.Collections" Version="3.1.4" />
+    <PackageReference Include="Chickensoft.Sync" Version="2.2.0" />
     <PackageReference Include="IsExternalInit" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="SauceControl.InheritDoc" Version="2.0.2">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Text.Json" Version="10.0.1" />
+    <PackageReference Include="System.Text.Json" Version="10.0.5" />
   </ItemGroup>
 </Project>
