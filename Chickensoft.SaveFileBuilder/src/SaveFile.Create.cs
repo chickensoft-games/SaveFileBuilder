@@ -11,7 +11,6 @@ using Chickensoft.SaveFileBuilder.Serialization;
 using System.Diagnostics.CodeAnalysis;
 #endif
 
-/// <summary>Provides factory methods for creating common save file configurations.</summary>
 public partial class SaveFile
 {
   /// <summary>Creates a new <see cref="SaveFile"/> that uses JSON serialization and GZip compression.</summary>
