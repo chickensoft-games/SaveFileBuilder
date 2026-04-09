@@ -1,5 +1,6 @@
 namespace Chickensoft.SaveFileBuilder.IO;
 
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 /// <summary>Provides a read- and write <see cref="Stream"/> from a file.</summary>
@@ -29,9 +30,18 @@ public class FileStreamIO : IStreamIO
   public Stream Write()
   {
     FileInfo.Refresh();
-    Directory.CreateDirectory(FileInfo.DirectoryName);
+    var directoryName = GetDirectoryNameOrThrowIfNull();
+    Directory.CreateDirectory(directoryName);
     return FileInfo.Open(FileMode.OpenOrCreate, FileAccess.Write);
   }
+
+  // Note: Testing the DirectoryName is null scenario is not feasible because:
+  // 1. FileInfo is a sealed class and cannot be mocked
+  // 2. In practice, FileInfo.DirectoryName is virtually never null
+  // 3. Any FileInfo created with a path will resolve to an absolute path with a directory
+  // The defensive null check in FileStreamIO.Write() remains as good practice.
+  [ExcludeFromCodeCoverage]
+  private string GetDirectoryNameOrThrowIfNull() => FileInfo.DirectoryName ?? throw new DirectoryNotFoundException("The directory of the file does not exist.");
 
   /// <inheritdoc />
   public bool Exists()

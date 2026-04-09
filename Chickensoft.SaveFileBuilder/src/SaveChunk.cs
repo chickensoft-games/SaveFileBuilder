@@ -46,7 +46,6 @@ public sealed partial class SaveChunk<TData> : ISaveChunk<TData> where TData : n
   private readonly record struct LoadBroadcast(TData Value);
 
   /// <summary>Represents a binding to a <see cref="SaveChunk{TData}"/> which can be used to register callbacks for save and load events.</summary>
-  /// <param name="subject"><inheritdoc cref="SyncBinding._subject"/></param>
   public class Binding(ISyncSubject subject) : SyncBinding(subject)
   {
     /// <summary>Registers a callback to be invoked when a save operation occurs, optionally filtered by a specified condition.</summary>

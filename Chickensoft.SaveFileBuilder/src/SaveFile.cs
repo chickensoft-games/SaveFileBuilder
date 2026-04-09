@@ -10,6 +10,10 @@ using Chickensoft.SaveFileBuilder.Compression;
 using Chickensoft.SaveFileBuilder.IO;
 using Chickensoft.SaveFileBuilder.Serialization;
 
+#if NET5_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
+
 /// <summary>Represents a save file that manages input / output, serialization and compression.</summary>
 public interface ISaveFile
 {
@@ -56,9 +60,19 @@ public interface ISaveFile
 /// <inheritdoc cref="ISaveFile"/>
 public partial class SaveFile : ISaveFile
 {
+  internal static class Suppressions
+  {
+    public static class IDE0370
+    {
+      public const string CATEGORY = "Style";
+      public const string CHECK_ID = "IDE0370:Remove unnecessary suppression";
+      public const string JUSTIFICATION = "Suppression required for compatibility with .net standard 2.1.";
+    }
+  }
+
   /// <inheritdoc />
 #if NET5_0_OR_GREATER
-  [System.Diagnostics.CodeAnalysisMemberNotNullWhen(true, nameof(_io), nameof(_serializer))]
+  [MemberNotNullWhen(true, nameof(_io), nameof(_serializer))]
 #endif
   public bool CanSaveSynchronously => _io is not null && _serializer is not null;
 
@@ -125,6 +139,9 @@ public partial class SaveFile : ISaveFile
   { }
 
   /// <inheritdoc />
+#if NET5_0_OR_GREATER
+  [SuppressMessage(Suppressions.IDE0370.CATEGORY, Suppressions.IDE0370.CHECK_ID, Justification = Suppressions.IDE0370.JUSTIFICATION)]
+#endif
   public void Save<TData>(TData data, CompressionLevel compressionLevel = default)
   {
     if (!CanSaveSynchronously)
@@ -138,6 +155,9 @@ public partial class SaveFile : ISaveFile
   }
 
   /// <inheritdoc />
+#if NET5_0_OR_GREATER
+  [SuppressMessage(Suppressions.IDE0370.CATEGORY, Suppressions.IDE0370.CHECK_ID, Justification = Suppressions.IDE0370.JUSTIFICATION)]
+#endif
   public TData? Load<TData>()
   {
     if (!CanSaveSynchronously)

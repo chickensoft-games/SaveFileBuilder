@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <LangVersion>preview</LangVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -30,6 +30,13 @@
 
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/chickensoft-games/SaveFileBuilder</RepositoryUrl>
+  </PropertyGroup>
+
+  <!-- Aot compatibility. -->
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
+    <PublishAot>true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
