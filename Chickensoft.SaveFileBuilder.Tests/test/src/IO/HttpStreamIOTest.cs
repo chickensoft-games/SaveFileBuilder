@@ -791,6 +791,55 @@ public class HttpStreamIOTest : IDisposable
 
   #endregion
 
+  #region ResponseStream Property and Method Tests
+
+  [Fact]
+  public async Task ReadAsync_ResponseStream_ExercisesAllStreamMembers()
+  {
+    _mockHandler.SetupResponse(HttpStatusCode.OK, "hello world");
+    using var streamIO = new HttpStreamIO(_httpClient, disposeClient: false)
+    {
+      RequestUris = new HttpIORequestUris(ReadUri: new Uri("api/read", UriKind.Relative))
+    };
+
+    using var stream = await streamIO.ReadAsync(CancellationToken);
+
+    // CanRead / CanSeek / CanWrite
+    Assert.True(stream.CanRead);
+    Assert.True(stream.CanSeek);
+    _ = stream.CanWrite; // just exercise the property; value depends on underlying stream
+
+    // Length
+    Assert.True(stream.Length > 0);
+
+    // Position get/set
+    stream.Position = 0;
+    Assert.Equal(0, stream.Position);
+
+    // Flush
+    var flushException = Record.Exception(stream.Flush);
+    Assert.Null(flushException);
+
+    // Read
+    stream.Position = 0;
+    var buffer = new byte[3];
+    var bytesRead = stream.Read(buffer, 0, 3);
+    Assert.True(bytesRead > 0);
+
+    // Seek
+    var pos = stream.Seek(0, SeekOrigin.Begin);
+    Assert.Equal(0, pos);
+
+    // SetLength — underlying HTTP response stream is read-only
+    Assert.Throws<NotSupportedException>(() => stream.SetLength(stream.Length));
+
+    // Write — underlying HTTP response stream is read-only
+    var writeBuffer = new byte[] { 1, 2, 3 };
+    Assert.Throws<NotSupportedException>(() => stream.Write(writeBuffer, 0, writeBuffer.Length));
+  }
+
+  #endregion
+
   #region Dispose Tests
 
   [Fact]

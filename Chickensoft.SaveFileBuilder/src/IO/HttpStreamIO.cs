@@ -117,31 +117,83 @@ public class HttpStreamIO : IAsyncStreamIO, IDisposable
     _disposeClient = disposeClient;
   }
 
+  private sealed class ResponseStream : Stream
+  {
+    private bool _isDisposed;
+    private readonly HttpResponseMessage _response;
+    private readonly Stream _contentStream;
+
+    private ResponseStream(HttpResponseMessage response, Stream contentStream)
+    {
+      _response = response;
+      _contentStream = contentStream;
+    }
+
+#if NET5_0_OR_GREATER
+    public static async Task<ResponseStream> Create(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+      var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+      return new ResponseStream(response, contentStream);
+    }
+#else
+    public static async Task<ResponseStream> Create(HttpResponseMessage response)
+    {
+      var contentStream = await response.Content.ReadAsStreamAsync();
+      return new ResponseStream(response, contentStream);
+    }
+#endif
+
+    public override bool CanRead => _contentStream.CanRead;
+    public override bool CanSeek => _contentStream.CanSeek;
+    public override bool CanWrite => _contentStream.CanWrite;
+    public override long Length => _contentStream.Length;
+    public override long Position
+    {
+      get => _contentStream.Position;
+      set => _contentStream.Position = value;
+    }
+
+    public override void Flush() => _contentStream.Flush();
+    public override int Read(byte[] buffer, int offset, int count) => _contentStream.Read(buffer, offset, count);
+    public override long Seek(long offset, SeekOrigin origin) => _contentStream.Seek(offset, origin);
+    public override void SetLength(long value) => _contentStream.SetLength(value);
+    public override void Write(byte[] buffer, int offset, int count) => _contentStream.Write(buffer, offset, count);
+
+    protected override void Dispose(bool disposing)
+    {
+      base.Dispose(disposing);
+
+      if (!_isDisposed)
+      {
+        _isDisposed = true;
+
+        if (disposing)
+        {
+          _response.Dispose();
+        }
+      }
+    }
+  }
+
   /// <inheritdoc />
   public async Task<Stream> ReadAsync(CancellationToken cancellationToken = default)
   {
-    using var response = await _httpClient.GetAsync(RequestUris.ReadUri, cancellationToken);
+    var response = await _httpClient.GetAsync(RequestUris.ReadUri, cancellationToken);
 
     try
     {
       response.EnsureSuccessStatusCode();
+#if NET5_0_OR_GREATER
+      return await ResponseStream.Create(response, cancellationToken);
+#else
+      return await ResponseStream.Create(response);
+#endif
     }
     catch (HttpRequestException)
     when (response.StatusCode is HttpStatusCode.NotFound)
     {
       return new MemoryStream();
     }
-
-#if NET5_0_OR_GREATER
-    await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-#else
-    await using var contentStream = await response.Content.ReadAsStreamAsync();
-#endif
-
-    var readStream = new MemoryStream();
-    await contentStream.CopyToAsync(readStream, cancellationToken);
-    readStream.Position = 0;
-    return readStream;
   }
 
   /// <inheritdoc />
