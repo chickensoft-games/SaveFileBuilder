@@ -56,9 +56,9 @@ public sealed partial class SaveChunk<TData> : ISaveChunk<TData> where TData : n
     {
       bool predicate(TData value) => condition?.Invoke(value) ?? true;
 
-      AddCallback<SaveBroadcast>(
-        (in broadcast) => callback(broadcast.Value),
-        (in broadcast) => predicate(broadcast.Value)
+      AddCallback(
+        (in SaveBroadcast broadcast) => callback(broadcast.Value),
+        (in SaveBroadcast broadcast) => predicate(broadcast.Value)
       );
 
       return this;
@@ -72,9 +72,9 @@ public sealed partial class SaveChunk<TData> : ISaveChunk<TData> where TData : n
     {
       bool predicate(TData value) => condition?.Invoke(value) ?? true;
 
-      AddCallback<LoadBroadcast>(
-        (in broadcast) => callback(broadcast.Value),
-        (in broadcast) => predicate(broadcast.Value)
+      AddCallback(
+        (in LoadBroadcast broadcast) => callback(broadcast.Value),
+        (in LoadBroadcast broadcast) => predicate(broadcast.Value)
       );
 
       return this;
