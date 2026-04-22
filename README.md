@@ -2,7 +2,7 @@
 
 [![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] [![Read the docs][read-the-docs-badge]][docs] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
-Compose chunks of save data into a single data type by creating loosely coupled save chunks at various points in your application, and modularly configure your saving method with plug-and-play support for saving to a file using json and gzip.
+Compose chunks of save data into a single data type by creating loosely coupled save chunks at various points in your application, and configure a save file with plug-and-play support for saving to a file using json and gzip.
 
 <p align="center">
 <img alt="Chickensoft.SaveFileBuilder" src="Chickensoft.SaveFileBuilder/icon.png" width="200">
@@ -95,7 +95,7 @@ public sealed class User : IDisposable
   public string Name { get; set; }
   public DateTime Birthday { get; set; }
 
-  // Publically expose our save chunk.
+  // Publicaly expose our save chunk.
   public ISaveChunk<UserData> UserChunk => _userChunk;
 
   private SaveChunk<UserData> _userChunk = new();
