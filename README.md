@@ -95,7 +95,7 @@ public sealed class User : IDisposable
   public string Name { get; set; }
   public DateTime Birthday { get; set; }
 
-  // Publicaly expose our save chunk.
+  // Publicly expose our save chunk.
   public ISaveChunk<UserData> UserChunk => _userChunk;
 
   private SaveChunk<UserData> _userChunk = new();
