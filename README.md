@@ -2,7 +2,7 @@
 
 [![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] [![Read the docs][read-the-docs-badge]][docs] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
-Compose chunks of save data into a single data type by creating loosely coupled save chunks at various points in your application.
+Compose chunks of save data into a single data type by creating loosely coupled save chunks at various points in your application, and modularly configure your saving method with plug-and-play support for saving to a file using json and gzip.
 
 <p align="center">
 <img alt="Chickensoft.SaveFileBuilder" src="Chickensoft.SaveFileBuilder/icon.png" width="200">
@@ -19,7 +19,8 @@ dotnet add package Chickensoft.SaveFileBuilder
 ## :hatching_chick: Quick Start
 
 ```csharp
-// Define your (serializable!) save data
+// Define your (serializable!) save data.
+// MUST provide an empty constructor!
 public class UserData
 {
   public string Name { get; set; }
@@ -27,36 +28,35 @@ public class UserData
 }
 
 // Define your class responsible for saving and loading.
-public class User
+public sealed class User : IDisposable
 {
   public string Name { get; set; }
-  public string Birthday { get; set; }
+  public DateTime Birthday { get; set; }
 
-  public SaveFile<UserData> SaveFile { get; }
-  public ISaveChunk<UserData> SaveChunk { get; }
+  private SaveFile _saveFile = SaveFile.CreateGZipJsonFile("savefile.json.gz");
+  private SaveChunk<UserData> _userChunk = new();
+  private ISaveChunk<UserData>.Binding _userBinding;
 
   public User()
   {
     // Define your saving and loading behavior at the start, and never again!
-    SaveChunk = new SaveChunk<UserData>(
-      onSave: (chunk) => new UserData()
-      {
-        Name = Name,
-        Birthday = Birthday
-      },
-      onLoad: (chunk, data) =>
-      {
+    _userBinding = _userChunk.Bind()
+      .OnSave(data => {
+        data.Name = Name;
+        data.Birthday = Birthday;
+      })
+      .OnLoad(data => {
         Name = data.Name;
         Birthday = data.Birthday;
-      }
-    );
-
-    // Let SaveFile take care of the rest.
-    SaveFile = SaveFile.CreateGZipJsonFile(SaveChunk, "savefile.json.gz");
+      });
   }
 
-  public Task OnSave() => SaveFile.SaveAsync();
-  public Task OnLoad() => SaveFile.LoadAsync();
+  // Let SaveFile take care of the rest.
+  public Task OnSave() => SaveFile.SaveAsync(_userChunk.Save());
+  public async Task OnLoad() => _userChunk.Load(await SaveFile.LoadAsync<UserData>());
+
+  // Dispose your saving and loading behavior and keep your save file clean.
+  public void Dispose() => _userBinding.Dispose();
 }
 ```
 
@@ -86,66 +86,73 @@ public class PreferencesData
 
 This modularity allows us to separate concerns when saving and loading data. The `User` class is only concerned with user data, while the `UserPreferences` class is only concerned with preferences data.
 
-We can link our save chunks together using:
-- `GetChunkSaveData` to retrieve child chunk data during save.
-- `LoadChunkSaveData` to load child chunk data during load.
-- `AddChunk` to compose our save data.
+We can link our save chunks by exposing our `ISaveChunk<UserData>` and defining extra save functionality for our `User` in our `UserPreferences`.
 
 ```csharp
 // Handle user logic.
-public class User
+public sealed class User : IDisposable
 {
   public string Name { get; set; }
   public DateTime Birthday { get; set; }
 
-  public ISaveChunk<UserData> SaveChunk { get; }
+  // Publically expose our save chunk.
+  public ISaveChunk<UserData> UserChunk => _userChunk;
+
+  private SaveChunk<UserData> _userChunk = new();
+  private ISaveChunk<UserData>.Binding _userBinding;
 
   public User()
   {
-    // Define our user chunk with a nested preferences chunk.
-    SaveChunk = new SaveChunk<UserData>(
-      onSave: (chunk) => new UserData()
-      {
-        Name = Name,
-        Birthday = Birthday,
-        Preferences = chunk.GetChunkSaveData<PreferencesData>()
-      },
-      onLoad: (chunk, data) =>
-      {
+    // Define our user chunk, but leave preferences empty.
+    _userBinding = _userChunk.Bind()
+      .OnSave(data => {
+        data.Name = Name;
+        data.Birthday = Birthday;
+      })
+      .OnLoad(data => {
         Name = data.Name;
         Birthday = data.Birthday;
-        chunk.LoadChunkSaveData(data.Preferences);
-      }
-    );
+      });
   }
+
+  public void Dispose() => _userBinding.Dispose();
 }
 
 // Handle preferences logic.
-public class UserPreferences
+public sealed class UserPreferences : IDisposable
 {
   public bool IsDarkMode { get; set; }
   public string Language { get; set; }
 
-  public ISaveChunk<PreferencesData> SaveChunk { get; }
+  public ISaveChunk<PreferencesData> PreferencesChunk => _preferencesChunk;
+
+  private SaveChunk<PreferencesData> _preferencesChunk = new();
+  private ISaveChunk<PreferencesData>.Binding _preferencesBinding;
+  private ISaveChunk<UserData>.Binding _userBinding;
 
   public UserPreferences(User user)
   {
     // Define our preferences chunk.
-    SaveChunk = new SaveChunk<PreferencesData>(
-      onSave: (chunk) => new PreferencesData()
-      {
-        IsDarkMode = IsDarkMode,
-        Language = Language
-      },
-      onLoad: (chunk, data) =>
-      {
+    _preferencesBinding = _preferencesChunk.Bind()
+      .OnSave(data => {
+        data.IsDarkMode = IsDarkMode;
+        data.Language = Language;
+      })
+      .OnLoad(data => {
         IsDarkMode = data.IsDarkMode;
         Language = data.Language;
-      }
-    );
+      });
 
-    // Add our preferences chunk as a child of the user chunk.
-    user.SaveChunk.AddChunk(SaveChunk);
+    // Define how our user saves our preferences.
+    _userBinding = user.UserChunk.Bind()
+      .OnSave(data => data.Preferences = _preferencesChunk.Save())
+      .OnLoad(data => _preferencesChunk.Load(data.Preferences));
+  }
+
+  public void Dispose()
+  {
+    _preferencesBinding.Dispose();
+    _userBinding.Dispose();
   }
 }
 ```
@@ -153,7 +160,7 @@ public class UserPreferences
 ## :floppy_disk: SaveFile & Flexibility
 
 > [!TIP]
-> If you just want to save some data to a file, call the following: `SaveFile.CreateGZipJsonFile(Root, "savefile.json.gz");`
+> If you just want to save some data to a file, call the following: `SaveFile.CreateGZipJsonFile("savefile.json.gz");`
 
 Saving a file involves 2 to 3 steps:
 - input / output (io)
@@ -194,30 +201,19 @@ You can then provide them to your SaveFile and mix- and match them with existing
 ```csharp
 public class App
 {
-  SaveFile<AzureData> AzureSaveFile { get; set; }
-  SaveFile<LocalData> LocalSaveFile { get; set; }
+  // Save to Azure using Json and Snappy
+  SaveFile AzureSaveFile { get; } = new(
+    asyncIO: new AzureStreamIO(), 
+    serializer: new JsonStreamSerializer(), 
+    compressor: new SnappyStreamCompressor()
+  );
 
-  public void Save()
-  {
-    // Define a SaveChunk<AzureData> AzureChunk
-    // Define a SaveChunk<LocalData> LocalChunk
-
-    AzureSaveFile = new
-    (
-      root: AzureChunk, 
-      asyncIO: new AzureStreamIO(), 
-      serializer: new JsonStreamSerializer(), 
-      compressor: new SnappyStreamCompressor()
-    );
-
-    LocalSaveFile = new
-    (
-      root: LocalChunk, 
-      io: new FileStreamIO(), 
-      serializer: new YamlStreamSerializer(), 
-      compressor: new BrotliStreamCompressor()
-    );
-  }
+  // Save to File using Yaml and Brotli
+  SaveFile<LocalData> LocalSaveFile { get; } = new(
+    io: new FileStreamIO(), 
+    serializer: new YamlStreamSerializer(), 
+    compressor: new BrotliStreamCompressor()
+  );
 }
 ```
 
@@ -238,16 +234,14 @@ using Godot;
 [Meta(typeof(IAutoNode))]
 public partial class Game : Node3D
 {
-  public SaveFile<GameData> SaveFile { get; set; } = default!;
-
   // Provide the root save chunk to all descendant nodes.
-  ISaveChunk<GameData> IProvide<ISaveChunk<GameData>>.Value() => SaveFile.Root;
+  ISaveChunk<GameData> IProvide<ISaveChunk<GameData>>.Value() => _gameChunk;
 
-  public void Setup()
-  {
-    var root = new SaveChunk<GameData>(onSave: ..., onLoad: ...);
-    SaveFile = SaveFile.CreateGZipJsonFile(root, SaveFilePath, JsonOptions);
-  }
+  private SaveFile _saveFile = SaveFile.CreateGZipJsonFile("savefile.json.gz");
+  private SaveChunk<GameData> _gameChunk = new();
+
+  public Task OnSave() => _saveFile.SaveAsync(_gameChunk.Save());
+  public async Task OnLoad() => _gameChunk.Load(_saveFile.LoadAsync<GameData>());
 }
 
 // Player is a child node of the Game node. It accesses the dependency provided by the Game class.
@@ -256,37 +250,46 @@ public partial class Player : CharacterBody3D
 {
   [Dependency]
   public ISaveChunk<GameData> GameChunk => this.DependOn<ISaveChunk<GameData>>();
-  public ISaveChunk<PlayerData> PlayerChunk { get; set; } = default!;
+
+  private SaveChunk<PlayerData> _playerChunk = new();
 
   // Player uses a StateMachine, or LogicBlock, to handle its state.
-  public IPlayerLogic PlayerLogic { get; set; } = default!;
+  private PlayerLogic _playerLogic = new();
+
+  // Utility class for collecting disposables.
+  private CompositeDisposable _disposal = new();
 
   public void Setup()
   {
-    PlayerLogic = new PlayerLogic();
-
-    PlayerChunk = new SaveChunk<PlayerData>(
-      onSave: (chunk) => new PlayerData()
-      {
-        GlobalTransform = GlobalTransform,
-        StateMachine = PlayerLogic,
-        Velocity = Velocity
-      },
-      onLoad: (chunk, data) =>
-      {
+    _playerChunk.Bind()
+      .OnSave(data => {
+        data.GlobalTransform = GlobalTransform,
+        data.StateMachine = _playerLogic,
+        data.Velocity = Velocity
+      })
+      .OnLoad(data => {
         GlobalTransform = data.GlobalTransform;
         Velocity = data.Velocity;
-        PlayerLogic.RestoreFrom(data.StateMachine);
-        PlayerLogic.Start();
-      }
-    );
+        _playerLogic.RestoreFrom(data.StateMachine);
+        _playerLogic.Start();
+      })
+      .DisposeWith(_disposal);
   }
 
   public void OnResolved()
   {
-    // Add a child to our parent save chunk (the game chunk) so that it can
-    // look up the player chunk when loading and saving the game.
-    GameChunk.AddChunk(PlayerChunk);
+    GameChunk.Bind()
+      .OnSave(data => data.Player = _playerChunk.Save())
+      .OnLoad(data => _playerChunk.Load(data.Player))
+      .DisposeWith(_disposal);
+
+    _playerLogic.Start();
+  }
+
+  public void OnExitTree()
+  {
+    _playerLogic.Stop();
+    _disposal.Dispose();
   }
 }
 ```
