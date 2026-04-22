@@ -171,7 +171,7 @@ public class SaveFileAsyncTest
 
     // Assert
     MockAsyncSerializer.Verify();
-    Assert.Equal("test", data);
+    Assert.Null(data);
   }
 
   [Fact]

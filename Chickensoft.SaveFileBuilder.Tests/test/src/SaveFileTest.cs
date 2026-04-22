@@ -70,7 +70,7 @@ public class SaveFileTest
     MockCompressor.Setup(compressor => compressor.Compress(It.IsAny<Stream>(), CompressionLevel.Fastest, false)).Verifiable();
 
     // Act
-    SaveFile.Save(CompressionLevel.Fastest);
+    SaveFile.Save("test", CompressionLevel.Fastest);
 
     // Assert
     MockCompressor.Verify();
