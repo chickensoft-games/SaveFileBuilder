@@ -1,95 +1,227 @@
 namespace Chickensoft.SaveFileBuilder.Tests;
 
-using System.Threading.Tasks;
-using Chickensoft.GoDotTest;
-using Godot;
-using Shouldly;
-
-public class SaveChunkTest(Node testScene) : TestClass(testScene)
+public class SaveChunkTest
 {
-  private sealed record SaveData { }
+  public SaveChunk<TestData> Chunk { get; set; }
 
-  [Test]
-  public void SavesAndLoads()
+  public SaveChunkTest()
   {
-    var onSave = Task.CompletedTask;
-    var data = new SaveData();
-
-    var loaded = false;
-
-    var saveChunk = new SaveChunk<SaveData>(
-      onSave: (chunk) => data,
-      onLoad: (chunk, data) => loaded = true
-    );
-
-    saveChunk.ShouldNotBeNull();
-
-    saveChunk.GetSaveData().ShouldBeSameAs(data);
-    saveChunk.LoadSaveData(data);
-    loaded.ShouldBeTrue();
+    Chunk = new SaveChunk<TestData>();
   }
 
-  [Test]
-  public void AddsAndGetsChunk()
+  [Fact]
+  public void Constructor_CreatesInstance()
   {
-    var onSave = Task.CompletedTask;
-    var data = new SaveData();
-
-    var saveChunk = new SaveChunk<SaveData>(
-      onSave: (chunk) => data,
-      onLoad: (chunk, data) => { }
-    );
-
-    var childLoaded = false;
-    var childData = new SaveData();
-    var child = new SaveChunk<SaveData>(
-      onSave: (chunk) => childData,
-      onLoad: (chunk, data) => childLoaded = true
-    );
-
-    saveChunk.AddChunk(child);
-
-    var childChunk = saveChunk.GetChunk<SaveData>();
-
-    childChunk.ShouldBeSameAs(child);
-
-    saveChunk.GetChunkSaveData<SaveData>().ShouldBeSameAs(childData);
-    saveChunk.LoadChunkSaveData(childData);
-    childLoaded.ShouldBeTrue();
+    var chunk = new SaveChunk<TestData>();
+    Assert.NotNull(chunk);
   }
 
-  [Test]
-  public void OverwritesAndGetsChunk()
+  [Fact]
+  public void Save_ReturnsNewDataInstance()
   {
-    var onSave = Task.CompletedTask;
-    var data = new SaveData();
+    var data = Chunk.Save();
+    Assert.NotNull(data);
+    Assert.IsType<TestData>(data);
+  }
 
-    var saveChunk = new SaveChunk<SaveData>(
-      onSave: (chunk) => data,
-      onLoad: (chunk, data) => { }
-    );
+  [Fact]
+  public void Save_InvokesOnSaveCallback()
+  {
+    // Arrange
+    TestData? savedData = null;
+    Chunk.Bind().OnSave(data => savedData = data);
 
-    var childData = new SaveData();
-    var child = new SaveChunk<SaveData>(
-      onSave: (chunk) => childData,
-      onLoad: (chunk, data) => { }
-    );
+    // Act
+    var result = Chunk.Save();
 
-    var otherChildData = new SaveData();
-    var otherChild = new SaveChunk<SaveData>(
-      onSave: (chunk) => otherChildData,
-      onLoad: (chunk, data) => { }
-    );
+    // Assert
+    Assert.NotNull(savedData);
+    Assert.Same(result, savedData);
+  }
 
-    saveChunk.AddChunk(child);
-    saveChunk.OverwriteChunk(otherChild);
+  [Fact]
+  public void Save_DataModifiedInCallback_ReflectedInReturnValue()
+  {
+    // Arrange
+    Chunk.Bind().OnSave(data => data.Name = "modified");
 
-    var childChunk = saveChunk.GetChunk<SaveData>();
+    // Act
+    var result = Chunk.Save();
 
-    childChunk.ShouldNotBeSameAs(child);
-    childChunk.ShouldBeSameAs(otherChild);
+    // Assert
+    Assert.Equal("modified", result.Name);
+  }
 
-    saveChunk.GetChunkSaveData<SaveData>().ShouldNotBeSameAs(childData);
-    saveChunk.GetChunkSaveData<SaveData>().ShouldBeSameAs(otherChildData);
+  [Fact]
+  public void Load_InvokesOnLoadCallback()
+  {
+    // Arrange
+    TestData? loadedData = null;
+    Chunk.Bind().OnLoad(data => loadedData = data);
+
+    var dataToLoad = new TestData { Name = "test", Value = 42 };
+
+    // Act
+    Chunk.Load(dataToLoad);
+
+    // Assert
+    Assert.NotNull(loadedData);
+    Assert.Same(dataToLoad, loadedData);
+  }
+
+  [Fact]
+  public void Bind_ReturnsBinding()
+  {
+    var binding = Chunk.Bind();
+    Assert.NotNull(binding);
+  }
+
+  [Fact]
+  public void ClearBindings_StopsOnSaveCallbackFromBeingInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++);
+
+    // Act
+    Chunk.ClearBindings();
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(0, callCount);
+  }
+
+  [Fact]
+  public void ClearBindings_StopsOnLoadCallbackFromBeingInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++);
+
+    // Act
+    Chunk.ClearBindings();
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(0, callCount);
+  }
+
+  [Fact]
+  public void Dispose_DoesNotThrow()
+  {
+    var exception = Record.Exception(Chunk.Dispose);
+    Assert.Null(exception);
+  }
+
+  [Fact]
+  public void OnSave_WithTrueCondition_InvokesCallback()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++, _ => true);
+
+    // Act
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(1, callCount);
+  }
+
+  [Fact]
+  public void OnSave_WithFalseCondition_DoesNotInvokeCallback()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++, _ => false);
+
+    // Act
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(0, callCount);
+  }
+
+  [Fact]
+  public void OnLoad_WithTrueCondition_InvokesCallback()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++, _ => true);
+
+    // Act
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(1, callCount);
+  }
+
+  [Fact]
+  public void OnLoad_WithFalseCondition_DoesNotInvokeCallback()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++, _ => false);
+
+    // Act
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(0, callCount);
+  }
+
+  [Fact]
+  public void OnSave_ReturnsBinding_ForMethodChaining()
+  {
+    // Arrange
+    var binding = Chunk.Bind();
+
+    // Act
+    var result = binding.OnSave(_ => { });
+
+    // Assert
+    Assert.Same(binding, result);
+  }
+
+  [Fact]
+  public void OnLoad_ReturnsBinding_ForMethodChaining()
+  {
+    // Arrange
+    var binding = Chunk.Bind();
+
+    // Act
+    var result = binding.OnLoad(_ => { });
+
+    // Assert
+    Assert.Same(binding, result);
+  }
+
+  [Fact]
+  public void MultipleBindings_AllOnSaveCallbacksInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnSave(_ => callCount++);
+    Chunk.Bind().OnSave(_ => callCount++);
+
+    // Act
+    Chunk.Save();
+
+    // Assert
+    Assert.Equal(2, callCount);
+  }
+
+  [Fact]
+  public void MultipleBindings_AllOnLoadCallbacksInvoked()
+  {
+    // Arrange
+    var callCount = 0;
+    Chunk.Bind().OnLoad(_ => callCount++);
+    Chunk.Bind().OnLoad(_ => callCount++);
+
+    // Act
+    Chunk.Load(new TestData());
+
+    // Assert
+    Assert.Equal(2, callCount);
   }
 }

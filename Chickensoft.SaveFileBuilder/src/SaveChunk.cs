@@ -1,137 +1,83 @@
 namespace Chickensoft.SaveFileBuilder;
 
 using System;
-using Chickensoft.Collections;
+using Sync;
+using Sync.Primitives;
 
-/// <summary>
-/// Represents a section of a save file. A chunk can contain other chunks.
-/// Save chunks form a tree composing the save file contents.
-/// </summary>
-/// <typeparam name="TData">Type of data associated with this save chunk.
-/// </typeparam>
-public interface ISaveChunk<TData> where TData : class
-{
-  /// <summary>
-  /// <para>
-  /// Callback that returns save data from the scene tree.
-  /// </para>
-  /// <para>
-  /// Only call this directly for testing. Prefer calling
-  /// <see cref="GetSaveData"/> to get the save data.
-  /// </para>
-  /// </summary>
-  Func<ISaveChunk<TData>, TData> OnSave { get; }
-
-  /// <summary>
-  /// <para>
-  /// Callback that loads the data into the scene tree.
-  /// </para>
-  /// <para>
-  /// Only call this directly for testing. Prefer calling
-  /// <see cref="LoadSaveData"/> to load the save data.
-  /// </para>
-  /// </summary>
-  Action<ISaveChunk<TData>, TData> OnLoad { get; }
-
-  /// <summary>
-  /// Gets the data associated with this save chunk.
-  /// </summary>
-  /// <returns>Save chunk data.</returns>
-  TData GetSaveData();
-
-  /// <summary>
-  /// Loads the data associated with this save chunk.
-  /// </summary>
-  /// <param name="data"></param>
-  void LoadSaveData(TData data);
-
-  /// <summary>
-  /// Adds a child save chunk to this chunk.
-  /// </summary>
-  /// <typeparam name="TDataType">Type of data associated with the child save
-  /// chunk.</typeparam>
-  void AddChunk<TDataType>(ISaveChunk<TDataType> child) where TDataType : class;
-
-  /// <summary>
-  /// Adds a child save chunk to or overwrites an existing chunk in this chunk, based on its compile-time type.
-  /// </summary>
-  /// <typeparam name="TDataType">Type of data associated with the child save
-  /// chunk.</typeparam>
-  void OverwriteChunk<TDataType>(ISaveChunk<TDataType> child) where TDataType : class;
-
-  /// <summary>
-  /// Gets a child save chunk.
-  /// </summary>
-  /// <typeparam name="TDataType">Type of data associated with the child save
-  /// chunk.</typeparam>
-  ISaveChunk<TDataType> GetChunk<TDataType>() where TDataType : class;
-
-  /// <summary>
-  /// Gets the data associated with a child save chunk.
-  /// </summary>
-  /// <typeparam name="TDataType">Type of data associated with the child save
-  /// chunk.</typeparam>
-  TDataType GetChunkSaveData<TDataType>() where TDataType : class;
-
-  /// <summary>
-  /// Loads the data associated with a child save chunk.
-  /// </summary>
-  /// <typeparam name="TDataType">Type of data associated with the child save
-  /// chunk.</typeparam>
-  void LoadChunkSaveData<TDataType>(TDataType data) where TDataType : class;
-}
+/// <summary>Represents a save chunk for saving and loading one type of data.</summary>
+/// <typeparam name="TData">Type of data associated with this save chunk.</typeparam>
+/// <remarks>Save chunks can be stacked to form a tree composing different types of data.</remarks>
+public interface ISaveChunk<TData> : IAutoObject<SaveChunk<TData>.Binding> where TData : new();
 
 /// <inheritdoc cref="ISaveChunk{TData}"/>
-public sealed class SaveChunk<TData> : ISaveChunk<TData> where TData : class
+public sealed partial class SaveChunk<TData> : ISaveChunk<TData> where TData : new()
 {
-  /// <inheritdoc cref="ISaveChunk{TData}.OnSave"/>
-  public Func<ISaveChunk<TData>, TData> OnSave { get; }
+  private readonly SyncSubject _subject;
 
-  /// <inheritdoc cref="ISaveChunk{TData}.OnLoad"/>
-  public Action<ISaveChunk<TData>, TData> OnLoad { get; }
-  private readonly Blackboard _children = new();
-
-  /// <summary>
-  /// Creates a new save chunk.
-  /// </summary>
-  /// <param name="onSave">Function to get the save data associated
-  /// with this chunk. Should receive the current chunk as a parameter and
-  /// return save data.</param>
-  /// <param name="onLoad">Function to load the save data associated
-  /// with this chunk. Should receive the current chunk and the data as
-  /// parameters.</param>
-  public SaveChunk(
-    Func<ISaveChunk<TData>, TData> onSave,
-    Action<ISaveChunk<TData>, TData> onLoad
-  )
+  /// <inheritdoc cref="SaveChunk{TData}" />
+  public SaveChunk()
   {
-    OnSave = onSave;
-    OnLoad = onLoad;
+    _subject = new SyncSubject(this);
   }
 
-  /// <inheritdoc />
-  public TData GetSaveData() => OnSave(this);
+  /// <summary>Broadcasts a save operation to all observers and returns the saved data.</summary>
+  /// <returns>The data object that was broadcast and saved by observers.</returns>
+  public TData Save()
+  {
+    var data = new TData();
+    _subject.Broadcast(new SaveBroadcast(data));
+    return data;
+  }
+
+  /// <summary>Broadcasts a load operation with the specified data to all observers.</summary>
+  /// <param name="data">The loaded data to broadcast to observers.</param>
+  public void Load(TData data) => _subject.Broadcast(new LoadBroadcast(data));
 
   /// <inheritdoc />
-  public void LoadSaveData(TData data) => OnLoad(this, data);
+  public Binding Bind() => new(_subject);
 
   /// <inheritdoc />
-  public void AddChunk<TDataType>(ISaveChunk<TDataType> child)
-    where TDataType : class => _children.Set(child);
+  public void ClearBindings() => _subject.ClearBindings();
 
   /// <inheritdoc />
-  public void OverwriteChunk<TDataType>(ISaveChunk<TDataType> child)
-    where TDataType : class => _children.Overwrite(child);
+  public void Dispose() => _subject.Dispose();
 
-  /// <inheritdoc />
-  public ISaveChunk<TDataType> GetChunk<TDataType>() where TDataType : class =>
-    _children.Get<ISaveChunk<TDataType>>();
+  private readonly record struct SaveBroadcast(TData Value);
+  private readonly record struct LoadBroadcast(TData Value);
 
-  /// <inheritdoc />
-  public TDataType GetChunkSaveData<TDataType>() where TDataType : class =>
-    GetChunk<TDataType>().GetSaveData();
+  /// <summary>Represents a binding to a <see cref="SaveChunk{TData}"/> which can be used to register callbacks for save and load events.</summary>
+  public class Binding(ISyncSubject subject) : SyncBinding(subject)
+  {
+    /// <summary>Registers a callback to be invoked when a save operation occurs, optionally filtered by a specified condition.</summary>
+    /// <param name="callback">The action to execute when a save event is broadcast. Receives the data to save as a parameter.</param>
+    /// <param name="condition">An optional predicate that determines whether the callback should be invoked for a given data value. If <see langword="null"/>, the callback is always invoked.</param>
+    /// <returns>The current binding instance, enabling method chaining.</returns>
+    public Binding OnSave(Action<TData> callback, Predicate<TData>? condition = null)
+    {
+      bool predicate(TData value) => condition?.Invoke(value) ?? true;
 
-  /// <inheritdoc />
-  public void LoadChunkSaveData<TDataType>(TDataType data)
-    where TDataType : class => GetChunk<TDataType>().LoadSaveData(data);
+      AddCallback(
+        (in SaveBroadcast broadcast) => callback(broadcast.Value),
+        (in SaveBroadcast broadcast) => predicate(broadcast.Value)
+      );
+
+      return this;
+    }
+
+    /// <summary>Registers a callback to be invoked when a load operation occurs, optionally filtered by a specified condition.</summary>
+    /// <param name="callback">The action to execute when a load event is broadcast. Receives the loaded data as a parameter.</param>
+    /// <param name="condition">An optional predicate that determines whether the callback should be invoked for a given data value. If <see langword="null"/>, the callback is always invoked.</param>
+    /// <returns>The current binding instance, enabling method chaining.</returns>
+    public Binding OnLoad(Action<TData> callback, Predicate<TData>? condition = null)
+    {
+      bool predicate(TData value) => condition?.Invoke(value) ?? true;
+
+      AddCallback(
+        (in LoadBroadcast broadcast) => callback(broadcast.Value),
+        (in LoadBroadcast broadcast) => predicate(broadcast.Value)
+      );
+
+      return this;
+    }
+  }
 }
