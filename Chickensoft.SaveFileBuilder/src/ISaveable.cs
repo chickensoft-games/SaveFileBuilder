@@ -1,5 +1,4 @@
 namespace Chickensoft.SaveFileBuilder;
-
 /// <summary>Defines functionality to save and load an object's state using a specified data type.</summary>
 /// <typeparam name="TData">The type of data used to represent the object's state. Must be a reference type.</typeparam>
 public interface ISaveable<TData> where TData : class
