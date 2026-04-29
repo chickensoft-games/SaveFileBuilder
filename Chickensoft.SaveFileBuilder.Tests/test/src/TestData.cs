@@ -4,8 +4,8 @@ using System.Text.Json.Serialization;
 
 public class TestData
 {
-  public string Name { get; set; } = string.Empty;
-  public int Value { get; set; }
+  public required string Name { get; init; }
+  public required int Value { get; init; }
 }
 
 [JsonSerializable(typeof(TestData))]

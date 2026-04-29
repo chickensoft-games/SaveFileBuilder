@@ -204,8 +204,7 @@ public partial class SaveFileFactoryTest
       Assert.True(File.Exists(tempFile));
 
       // Act - Load
-      data.Name = "Modified";
-      data.Value = 0;
+      data = new TestData { Name = "Modified", Value = 0 };
       data = saveFile.Load<TestData>();
 
       // Assert - Data restored
@@ -241,8 +240,7 @@ public partial class SaveFileFactoryTest
       Assert.True(await saveFile.ExistsAsync(CancellationToken));
 
       // Act - Load
-      data.Name = "Modified";
-      data.Value = 0;
+      data = new TestData { Name = "Modified", Value = 0 };
       data = await saveFile.LoadAsync<TestData>(CancellationToken);
 
       // Assert - Data restored

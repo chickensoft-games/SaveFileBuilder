@@ -2,7 +2,7 @@
 
 [![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] [![Read the docs][read-the-docs-badge]][docs] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
-Compose chunks of save data into a single data type by creating loosely coupled save chunks at various points in your application, and configure a save file with plug-and-play support for saving to a file using json and gzip.
+Easily define your own save file with custom serialization formats, compression algorithms, and IO providers by implementing the relevant interfaces. Out-of-the-box support for saving to a file using json and gzip.
 
 <p align="center">
 <img alt="Chickensoft.SaveFileBuilder" src="Chickensoft.SaveFileBuilder/icon.png" width="200">
@@ -20,142 +20,103 @@ dotnet add package Chickensoft.SaveFileBuilder
 
 ```csharp
 // Define your (serializable!) save data.
-// MUST provide an empty constructor!
-public class UserData
+public record UserData
 {
-  public string Name { get; set; }
-  public DateTime Birthday { get; set; }
+  public required string Name { get; init; }
+  public required DateTime Birthday { get; init; }
 }
 
 // Define your class responsible for saving and loading.
-public sealed class User : IDisposable
+public sealed class User : ISaveable<UserData>
 {
   public string Name { get; set; }
   public DateTime Birthday { get; set; }
 
-  private SaveFile _saveFile = SaveFile.CreateGZipJsonFile("savefile.json.gz");
-  private SaveChunk<UserData> _userChunk = new();
-  private ISaveChunk<UserData>.Binding _userBinding;
+  // Define your saving and loading behavior through the interfaces.
+  public UserData Save() => new() 
+  { 
+    Name = this.Name, 
+    Birthday = this.Birthday 
+  };
 
-  public User()
+  public void Load(in UserData data)
   {
-    // Define your saving and loading behavior at the start, and never again!
-    _userBinding = _userChunk.Bind()
-      .OnSave(data => {
-        data.Name = Name;
-        data.Birthday = Birthday;
-      })
-      .OnLoad(data => {
-        Name = data.Name;
-        Birthday = data.Birthday;
-      });
+    this.Name = data.Name;
+    this.Birthday = data.Birthday;
+
+    // Call additional loading logic
+    UpdateUI();
   }
 
   // Let SaveFile take care of the rest.
-  public Task OnSave() => SaveFile.SaveAsync(_userChunk.Save());
-  public async Task OnLoad() => _userChunk.Load(await SaveFile.LoadAsync<UserData>());
+  private SaveFile _saveFile = SaveFile.CreateGZipJsonFile("savefile.json.gz");
 
-  // Dispose your saving and loading behavior and keep your save file clean.
-  public void Dispose() => _userBinding.Dispose();
+  public ValueTask OnSave() => _saveFile.SaveAsync(Save());
+  public async ValueTask OnLoad() => Load(in (await _saveFile.LoadAsync<UserData>()));
 }
 ```
 
 > [!TIP]
 > You can define easily serializable types with [Chickensoft.Serialization].
 
-## 🍪 Save Chunks & Modularity
+## :cookie: Saveable & Modularity
 
-SaveChunks are smaller pieces of save data that are composed together into the overall save file.
+Saveables define how an object saves and loads itself. They are a minimal interface that only requires you to implement `Save` and `Load` methods. This allows you to keep your save logic close to the relevant data and behavior, and easily compose them together.
 
-```csharp
-// User data contains preferences data separately.
-public class UserData
-{
-  public string Name { get; set; }
-  public DateTime Birthday { get; set; }
-  public PreferencesData Preferences { get; set; }
-}
-
-// This allows us to keep our save data and -logic modular.
-public class PreferencesData
-{
-  public bool IsDarkMode { get; set; }
-  public string Language { get; set; }
-}
-```
-
-This modularity allows us to separate concerns when saving and loading data. The `User` class is only concerned with user data, while the `UserPreferences` class is only concerned with preferences data.
-
-We can link our save chunks by exposing our `ISaveChunk<UserData>` and defining extra save functionality for our `User` in our `UserPreferences`.
+To compose saveables, simply call `Save` and `Load` down the stack of saveables to fully populate your root data object.
 
 ```csharp
-// Handle user logic.
-public sealed class User : IDisposable
+public record UserData
 {
-  public string Name { get; set; }
-  public DateTime Birthday { get; set; }
+  public required PreferencesData Preferences { get; init; }
+}
 
-  // Publicly expose our save chunk.
-  public ISaveChunk<UserData> UserChunk => _userChunk;
+public record PreferencesData
+{
+  public required bool IsDarkMode { get; init; }
+  public required string Language { get; init; }
+}
 
-  private SaveChunk<UserData> _userChunk = new();
-  private ISaveChunk<UserData>.Binding _userBinding;
+public class User : ISaveable<UserData>
+{
+  // Reference a Preferences class and calls its 
+  // Save and Load methods to compose the data.
+  public Preferences Preferences { get; }
 
-  public User()
+  public UserData Save() => new() 
+  { 
+    Preferences = Preferences.Save(),
+  };
+
+  public void Load(in UserData data)
   {
-    // Define our user chunk, but leave preferences empty.
-    _userBinding = _userChunk.Bind()
-      .OnSave(data => {
-        data.Name = Name;
-        data.Birthday = Birthday;
-      })
-      .OnLoad(data => {
-        Name = data.Name;
-        Birthday = data.Birthday;
-      });
+    Preferences.Load(in data.Preferences);
   }
-
-  public void Dispose() => _userBinding.Dispose();
 }
 
-// Handle preferences logic.
-public sealed class UserPreferences : IDisposable
+public class Preferences : ISaveable<PreferencesData>
 {
   public bool IsDarkMode { get; set; }
   public string Language { get; set; }
 
-  public ISaveChunk<PreferencesData> PreferencesChunk => _preferencesChunk;
+  // Its Save and Load methods are called by 
+  // the User class to compose the data.
+  public PreferencesData Save() => new() 
+  { 
+    IsDarkMode = this.IsDarkMode, 
+    Language = this.Language 
+  };
 
-  private SaveChunk<PreferencesData> _preferencesChunk = new();
-  private ISaveChunk<PreferencesData>.Binding _preferencesBinding;
-  private ISaveChunk<UserData>.Binding _userBinding;
-
-  public UserPreferences(User user)
+  public void Load(in PreferencesData data)
   {
-    // Define our preferences chunk.
-    _preferencesBinding = _preferencesChunk.Bind()
-      .OnSave(data => {
-        data.IsDarkMode = IsDarkMode;
-        data.Language = Language;
-      })
-      .OnLoad(data => {
-        IsDarkMode = data.IsDarkMode;
-        Language = data.Language;
-      });
-
-    // Define how our user saves our preferences.
-    _userBinding = user.UserChunk.Bind()
-      .OnSave(data => data.Preferences = _preferencesChunk.Save())
-      .OnLoad(data => _preferencesChunk.Load(data.Preferences));
-  }
-
-  public void Dispose()
-  {
-    _preferencesBinding.Dispose();
-    _userBinding.Dispose();
+    this.IsDarkMode = data.IsDarkMode;
+    this.Language = data.Language;
   }
 }
 ```
+
+> [!NOTE]
+> SaveFileBuilder does not help you reference your saveables. How you reference a saveable is up to you: it could be owned, be provided through a constructor, be available through a static instance or be injected using dependency injection.
 
 ## :floppy_disk: SaveFile & Flexibility
 
@@ -222,7 +183,7 @@ public class App
 
 ## <img src="Chickensoft.SaveFileBuilder/godot-icon.png" width="24" /> Usage in Godot
 
-Using [Introspection] and [AutoInject], you can link chunks together in Godot by providing- and accessing dependencies in your scene tree. Mark the relevant nodes as `IAutoNode`'s, provide dependencies from parent nodes, and access them in child nodes. 
+Using [Introspection] and [AutoInject], you can link saveables together in Godot by providing- and accessing dependencies in your scene tree. Mark the relevant nodes as `IAutoNode`'s and use the `[Node]` attribute to inject them into your saveable classes. Then, simply call `Save` and `Load` on your root node to save and load the entire game state.
 
 ```csharp
 using Chickensoft.Introspection;
@@ -230,66 +191,92 @@ using Chickensoft.AutoInject;
 using Chickensoft.SaveFileBuilder;
 using Godot;
 
-// Game is the root node in the scene. It provides the dependency to descendant nodes.
+public interface IGameData : INode3D, ISaveable<GameData>;
+
+// Game is the root node in the scene.
 [Meta(typeof(IAutoNode))]
-public partial class Game : Node3D
+public partial class Game : Node3D, IGame
 {
-  // Provide the root save chunk to all descendant nodes.
-  ISaveChunk<GameData> IProvide<ISaveChunk<GameData>>.Value() => _gameChunk;
+  // The Player node is a child of the Game node.
+  [Node] public IPlayer Player { get; set; } = default!;
 
+  // GameData is the root data object that contains all the data that needs to be saved.
+  public GameData Save() => new() 
+  { 
+    Player = Player.Save() 
+  };
+
+  public void Load(in GameData data) => Player.Load(data.Player);
+
+  // SaveFile handles the saving and loading of the game data.
   private SaveFile _saveFile = SaveFile.CreateGZipJsonFile("savefile.json.gz");
-  private SaveChunk<GameData> _gameChunk = new();
-
-  public Task OnSave() => _saveFile.SaveAsync(_gameChunk.Save());
-  public async Task OnLoad() => _gameChunk.Load(_saveFile.LoadAsync<GameData>());
+  
+  public Task OnSave() => _saveFile.SaveAsync(Save());
+  public async Task OnLoad() => Load(_saveFile.LoadAsync<GameData>());
 }
 
-// Player is a child node of the Game node. It accesses the dependency provided by the Game class.
+public interface IPlayer : ICharacterBody3D, ISaveable<PlayerData>;
+
 [Meta(typeof(IAutoNode))]
-public partial class Player : CharacterBody3D
+public partial class Player : CharacterBody3D, IPlayer
 {
-  [Dependency]
-  public ISaveChunk<GameData> GameChunk => this.DependOn<ISaveChunk<GameData>>();
-
-  private SaveChunk<PlayerData> _playerChunk = new();
-
   // Player uses a StateMachine, or LogicBlock, to handle its state.
   private PlayerLogic _playerLogic = new();
 
-  // Utility class for collecting disposables.
-  private CompositeDisposable _disposal = new();
-
-  public void Setup()
+  // PlayerData is the data object for the Player.
+  public PlayerData Save() => new()
   {
-    _playerChunk.Bind()
-      .OnSave(data => {
-        data.GlobalTransform = GlobalTransform,
-        data.StateMachine = _playerLogic,
-        data.Velocity = Velocity
-      })
-      .OnLoad(data => {
-        GlobalTransform = data.GlobalTransform;
-        Velocity = data.Velocity;
-        _playerLogic.RestoreFrom(data.StateMachine);
-        _playerLogic.Start();
-      })
-      .DisposeWith(_disposal);
+    GlobalTransform = GlobalTransform,
+    StateMachine = _playerLogic,
+    Velocity = Velocity
+  };
+
+  public void Load(in PlayerData data)
+  {
+    GlobalTransform = data.GlobalTransform;
+    Velocity = data.Velocity;
+    _playerLogic.RestoreFrom(data.StateMachine);
+    _playerLogic.Start();
   }
 
+  // Start and Stop our state machine.
   public void OnResolved()
   {
-    GameChunk.Bind()
-      .OnSave(data => data.Player = _playerChunk.Save())
-      .OnLoad(data => _playerChunk.Load(data.Player))
-      .DisposeWith(_disposal);
-
     _playerLogic.Start();
   }
 
   public void OnExitTree()
   {
     _playerLogic.Stop();
-    _disposal.Dispose();
+  }
+}
+```
+
+If you need something more indirect, you can use an [EntityTable] to store and retrieve saveables by their unique identifiers. This allows you to save and load saveables that are not directly referenced in your scene tree.
+
+```csharp
+public interface IGameData : INode3D
+  , ISaveable<GameData>
+  , IProvide<EntityTable>;
+
+[Meta(typeof(IAutoNode))]
+public partial class Game : Node3D, IGame
+{
+  private EntityTable Saveables { get; } = new();
+
+  EntityTable IProvide<EntityTable>.Value() => Saveables;
+
+  public GameData Save() => new()
+  {
+    Player = EntityTable.Get<IPlayer>("player")?.Save() 
+      ?? throw new InvalidOperationException("Player not found in EntityTable.")
+  };
+
+  public void Load(in GameData data)
+  {
+    var player = EntityTable.Get<IPlayer>("player")
+      ?? throw new InvalidOperationException("Player not found in EntityTable.");
+    player.Load(data.Player);
   }
 }
 ```
@@ -319,5 +306,6 @@ public partial class Player : CharacterBody3D
 [LogicBlocks]: https://github.com/chickensoft-games/LogicBlocks
 [Chickensoft.Serialization]: https://github.com/chickensoft-games/Serialization
 [nuget]: https://www.nuget.org/packages/Chickensoft.SaveFileBuilder
+[EntityTable]: https://github.com/chickensoft-games/Collections#entitytable
 
 [Streams]: https://learn.microsoft.com/en-us/dotnet/api/system.io.stream]
