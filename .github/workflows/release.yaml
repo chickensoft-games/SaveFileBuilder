@@ -50,14 +50,6 @@ jobs:
         run: |
           echo "Current Version: ${{ steps.current-version.outputs.tag }}"
 
-      - name: 🧮 Compute Next Version
-        uses: chickensoft-games/next-godot-csproj-version@v1
-        id: next-version
-        with:
-          project-version: ${{ steps.current-version.outputs.tag }}
-          godot-version: global.json
-          bump: ${{ inputs.bump }}
-
       - uses: actions/setup-dotnet@v5
         name: 💽 Setup .NET SDK
         with:
