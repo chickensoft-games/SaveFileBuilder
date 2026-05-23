@@ -32,6 +32,7 @@ public class DeflateStreamCompressorTest
 
     Assert.NotNull(compressedStream);
     Assert.IsType<DeflateStream>(compressedStream);
+    Assert.True(compressedStream.CanWrite);
   }
 
   [Fact]
@@ -42,6 +43,7 @@ public class DeflateStreamCompressorTest
 
     Assert.NotNull(compressedStream);
     Assert.IsType<DeflateStream>(compressedStream);
+    Assert.True(compressedStream.CanWrite);
   }
 
   [Fact]
@@ -52,6 +54,7 @@ public class DeflateStreamCompressorTest
 
     Assert.NotNull(compressedStream);
     Assert.IsType<DeflateStream>(compressedStream);
+    Assert.True(compressedStream.CanWrite);
   }
 
   [Fact]
@@ -62,6 +65,7 @@ public class DeflateStreamCompressorTest
 
     Assert.NotNull(compressedStream);
     Assert.IsType<DeflateStream>(compressedStream);
+    Assert.True(compressedStream.CanWrite);
   }
 
   [Fact]
