@@ -181,7 +181,7 @@ public class App
 > [!NOTE]
 > If you write your own implementations of these interfaces, consider contributing them back to the Chickensoft community by opening a PR!
 
-## <img src="Chickensoft.SaveFileBuilder/godot-icon.png" width="24" /> Usage in Godot
+## :video_game: Usage in Godot
 
 Using [Introspection] and [AutoInject], you can link saveables together in Godot by providing- and accessing dependencies in your scene tree. Mark the relevant nodes as `IAutoNode`'s and use the `[Node]` attribute to inject them into your saveable classes. Then, simply call `Save` and `Load` on your root node to save and load the entire game state.
 
