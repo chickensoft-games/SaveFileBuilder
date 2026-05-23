@@ -82,7 +82,7 @@ public partial class SaveFile
   );
 
   /// <inheritdoc cref="CreateGZipJsonIO(IAsyncStreamIO, JsonSerializerOptions?)" />
-  public static SaveFile CreateGZipJsonFIO(IAsyncStreamIO asyncIO, JsonTypeInfo jsonTypeInfo) => new(
+  public static SaveFile CreateGZipJsonIO(IAsyncStreamIO asyncIO, JsonTypeInfo jsonTypeInfo) => new(
     asyncIO: asyncIO,
     asyncSerializer: new JsonStreamSerializer(jsonTypeInfo),
     compressor: new GZipStreamCompressor()

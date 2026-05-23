@@ -172,14 +172,14 @@ public partial class SaveFileFactoryTest
   }
 
   [Fact]
-  public void CreateGZipJsonFIO_WithIAsyncStreamIOAndJsonTypeInfo_CreatesValidInstance()
+  public void CreateGZipJsonIO_WithIAsyncStreamIOAndJsonTypeInfo_CreatesValidInstance()
   {
     // Arrange
     var mockAsyncIO = new Mock<IAsyncStreamIO>();
     var typeInfo = TestJsonContext.Default.TestData;
 
     // Act
-    var saveFile = SaveFile.CreateGZipJsonFIO(mockAsyncIO.Object, typeInfo);
+    var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object, typeInfo);
 
     // Assert
     Assert.NotNull(saveFile);
