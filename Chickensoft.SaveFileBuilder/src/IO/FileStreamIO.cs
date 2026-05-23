@@ -29,7 +29,6 @@ public class FileStreamIO : IStreamIO
   /// <inheritdoc />
   public Stream Write()
   {
-    FileInfo.Refresh();
     var directoryName = GetDirectoryNameOrThrowIfNull();
     Directory.CreateDirectory(directoryName);
     return FileInfo.Open(FileMode.OpenOrCreate, FileAccess.Write);
@@ -41,7 +40,11 @@ public class FileStreamIO : IStreamIO
   // 3. Any FileInfo created with a path will resolve to an absolute path with a directory
   // The defensive null check in FileStreamIO.Write() remains as good practice.
   [ExcludeFromCodeCoverage]
-  private string GetDirectoryNameOrThrowIfNull() => FileInfo.DirectoryName ?? throw new DirectoryNotFoundException("The directory of the file does not exist.");
+  private string GetDirectoryNameOrThrowIfNull()
+  {
+    FileInfo.Refresh();
+    return FileInfo.DirectoryName ?? throw new DirectoryNotFoundException("The directory of the file does not exist.");
+  }
 
   /// <inheritdoc />
   public bool Exists()
