@@ -48,8 +48,8 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("<Name>Test</Name>", xml);
-    Assert.Contains("<Value>42</Value>", xml);
+    xml.ShouldContain("<Name>Test</Name>");
+    xml.ShouldContain("<Value>42</Value>");
   }
 
   [Fact]
@@ -65,7 +65,7 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("xsi:nil=\"true\"", xml);
+    xml.ShouldContain("xsi:nil=\"true\"");
   }
 
   [Fact]
@@ -89,13 +89,13 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("<Description>Complex Test</Description>", xml);
-    Assert.Contains("<Number>100</Number>", xml);
-    Assert.Contains("<DecimalNumber>3.14159</DecimalNumber>", xml);
-    Assert.Contains("<Flag>true</Flag>", xml);
-    Assert.Contains("<string>Item1</string>", xml);
-    Assert.Contains("<string>Item2</string>", xml);
-    Assert.Contains("<string>Item3</string>", xml);
+    xml.ShouldContain("<Description>Complex Test</Description>");
+    xml.ShouldContain("<Number>100</Number>");
+    xml.ShouldContain("<DecimalNumber>3.14159</DecimalNumber>");
+    xml.ShouldContain("<Flag>true</Flag>");
+    xml.ShouldContain("<string>Item1</string>");
+    xml.ShouldContain("<string>Item2</string>");
+    xml.ShouldContain("<string>Item3</string>");
   }
 
   [Fact]
@@ -112,9 +112,9 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("<CustomRoot", xml);
-    Assert.Contains("id=\"123\"", xml);
-    Assert.Contains("<CustomName>CustomName</CustomName>", xml);
+    xml.ShouldContain("<CustomRoot");
+    xml.ShouldContain("id=\"123\"");
+    xml.ShouldContain("<CustomName>CustomName</CustomName>");
   }
 
   [Fact]
@@ -135,9 +135,9 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("&lt;special&gt;", xml);
-    Assert.Contains("&amp;", xml);
-    Assert.Contains("\"", xml);
+    xml.ShouldContain("&lt;special&gt;");
+    xml.ShouldContain("&amp;");
+    xml.ShouldContain("\"");
   }
 
   [Fact]
@@ -163,7 +163,7 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\n  <Name>Test</Name>", xml);
+    xml.ShouldContain("\n  <Name>Test</Name>");
   }
 
   [Fact]
@@ -185,8 +185,8 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.DoesNotContain("xmlns:xsi", xml);
-    Assert.DoesNotContain("xmlns:xsd", xml);
+    xml.ShouldNotContain("xmlns:xsi");
+    xml.ShouldNotContain("xmlns:xsd");
   }
 
   [Fact]
@@ -210,7 +210,7 @@ public partial class XmlStreamSerializerTest
     // Assert
     stream.Position = 0;
     var xml = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.DoesNotContain("<?xml version", xml);
+    xml.ShouldNotContain("<?xml version");
   }
 
   #endregion
@@ -235,9 +235,9 @@ public partial class XmlStreamSerializerTest
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("DeserializeTest", result.Name);
-    Assert.Equal(789, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("DeserializeTest");
+    result.Value.ShouldBe(789);
   }
 
   [Fact]
@@ -264,14 +264,14 @@ public partial class XmlStreamSerializerTest
     var result = serializer.Deserialize<ComplexTestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("Complex Test", result.Description);
-    Assert.Equal(100, result.Number);
-    Assert.Equal(3.14159, result.DecimalNumber);
-    Assert.True(result.Flag);
-    Assert.Equal(2, result.Items.Count);
-    Assert.Contains("Item1", result.Items);
-    Assert.Contains("Item2", result.Items);
+    result.ShouldNotBeNull();
+    result.Description.ShouldBe("Complex Test");
+    result.Number.ShouldBe(100);
+    result.DecimalNumber.ShouldBe(3.14159);
+    result.Flag.ShouldBeTrue();
+    result.Items.Count.ShouldBe(2);
+    result.Items.ShouldContain("Item1");
+    result.Items.ShouldContain("Item2");
   }
 
   [Fact]
@@ -291,9 +291,9 @@ public partial class XmlStreamSerializerTest
     var result = serializer.Deserialize<XmlTestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal(456, result.Id);
-    Assert.Equal("TestName", result.Name);
+    result.ShouldNotBeNull();
+    result.Id.ShouldBe(456);
+    result.Name.ShouldBe("TestName");
   }
 
   [Fact]
@@ -314,9 +314,9 @@ public partial class XmlStreamSerializerTest
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("Test with <special> & \"characters\"", result.Name);
-    Assert.Equal(42, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("Test with <special> & \"characters\"");
+    result.Value.ShouldBe(42);
   }
 
   [Fact]
@@ -328,9 +328,7 @@ public partial class XmlStreamSerializerTest
     using var stream = new MemoryStream(Encoding.UTF8.GetBytes(invalidXml));
 
     // Act & Assert
-    Assert.Throws<InvalidOperationException>(
-      () => serializer.Deserialize<TestData>(stream)
-    );
+    Should.Throw<InvalidOperationException>(() => serializer.Deserialize<TestData>(stream));
   }
 
   [Fact]
@@ -341,9 +339,7 @@ public partial class XmlStreamSerializerTest
     using var stream = new MemoryStream();
 
     // Act & Assert
-    Assert.Throws<XmlException>(
-      () => serializer.Deserialize<TestData>(stream)
-    );
+    Should.Throw<XmlException>(() => serializer.Deserialize<TestData>(stream));
   }
 
   [Fact]
@@ -355,9 +351,7 @@ public partial class XmlStreamSerializerTest
     using var stream = new MemoryStream(Encoding.UTF8.GetBytes(malformedXml));
 
     // Act & Assert
-    Assert.Throws<InvalidOperationException>(
-      () => serializer.Deserialize<TestData>(stream)
-    );
+    Should.Throw<InvalidOperationException>(() => serializer.Deserialize<TestData>(stream));
   }
 
   [Fact]
@@ -377,7 +371,7 @@ public partial class XmlStreamSerializerTest
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.Null(result);
+    result.ShouldBeNull();
   }
 
   [Fact]
@@ -407,9 +401,9 @@ public partial class XmlStreamSerializerTest
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("    Test    ", result.Name);
-    Assert.Equal(42, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("    Test    ");
+    result.Value.ShouldBe(42);
   }
 
   [Fact]
@@ -442,9 +436,9 @@ public partial class XmlStreamSerializerTest
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("Test", result.Name);
-    Assert.Equal(42, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("Test");
+    result.Value.ShouldBe(42);
   }
 
   #endregion
@@ -471,9 +465,9 @@ public partial class XmlStreamSerializerTest
     var deserializedData = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -499,15 +493,15 @@ public partial class XmlStreamSerializerTest
     var deserializedData = serializer.Deserialize<ComplexTestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Description, deserializedData.Description);
-    Assert.Equal(originalData.Number, deserializedData.Number);
-    Assert.Equal(originalData.DecimalNumber, deserializedData.DecimalNumber);
-    Assert.Equal(originalData.Flag, deserializedData.Flag);
-    Assert.Equal(originalData.Items.Count, deserializedData.Items.Count);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Description.ShouldBe(originalData.Description);
+    deserializedData.Number.ShouldBe(originalData.Number);
+    deserializedData.DecimalNumber.ShouldBe(originalData.DecimalNumber);
+    deserializedData.Flag.ShouldBe(originalData.Flag);
+    deserializedData.Items.Count.ShouldBe(originalData.Items.Count);
     for (var i = 0; i < originalData.Items.Count; i++)
     {
-      Assert.Equal(originalData.Items[i], deserializedData.Items[i]);
+      deserializedData.Items[i].ShouldBe(originalData.Items[i]);
     }
   }
 
@@ -532,9 +526,9 @@ public partial class XmlStreamSerializerTest
     var deserializedData = deserializeSerializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -557,9 +551,9 @@ public partial class XmlStreamSerializerTest
     var deserializedData = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -582,9 +576,9 @@ public partial class XmlStreamSerializerTest
     var deserializedData = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -610,10 +604,10 @@ public partial class XmlStreamSerializerTest
     var deserializedData = serializer.Deserialize<ComplexTestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Description, deserializedData.Description);
-    Assert.NotNull(deserializedData.Items);
-    Assert.Empty(deserializedData.Items);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Description.ShouldBe(originalData.Description);
+    deserializedData.Items.ShouldNotBeNull();
+    deserializedData.Items.ShouldBeEmpty();
   }
 
   [Fact]
@@ -647,9 +641,9 @@ public partial class XmlStreamSerializerTest
     var deserializedData = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   #endregion
@@ -663,10 +657,10 @@ public partial class XmlStreamSerializerTest
     var serializer = new XmlStreamSerializer();
 
     // Assert
-    Assert.NotNull(serializer.ReaderSettings);
-    Assert.NotNull(serializer.WriterSettings);
-    Assert.NotNull(serializer.SerializerNamespaces);
-    Assert.Null(serializer.ParserContext);
+    serializer.ReaderSettings.ShouldNotBeNull();
+    serializer.WriterSettings.ShouldNotBeNull();
+    serializer.SerializerNamespaces.ShouldNotBeNull();
+    serializer.ParserContext.ShouldBeNull();
   }
 
   [Fact]
@@ -690,10 +684,10 @@ public partial class XmlStreamSerializerTest
     };
 
     // Assert
-    Assert.Same(readerSettings, serializer.ReaderSettings);
-    Assert.Same(writerSettings, serializer.WriterSettings);
-    Assert.Same(namespaces, serializer.SerializerNamespaces);
-    Assert.Same(parserContext, serializer.ParserContext);
+    serializer.ReaderSettings.ShouldBeSameAs(readerSettings);
+    serializer.WriterSettings.ShouldBeSameAs(writerSettings);
+    serializer.SerializerNamespaces.ShouldBeSameAs(namespaces);
+    serializer.ParserContext.ShouldBeSameAs(parserContext);
   }
 
   #endregion

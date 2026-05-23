@@ -19,9 +19,9 @@ public class BrotliStreamCompressorTest
     using var baseStream = new MemoryStream();
     var compressedStream = _compressor.Compress(baseStream);
 
-    Assert.NotNull(compressedStream);
-    Assert.IsType<BrotliStream>(compressedStream);
-    Assert.True(compressedStream.CanWrite);
+    compressedStream.ShouldNotBeNull();
+    compressedStream.ShouldBeOfType<BrotliStream>();
+    compressedStream.CanWrite.ShouldBeTrue();
   }
 
   [Fact]
@@ -30,9 +30,9 @@ public class BrotliStreamCompressorTest
     using var baseStream = new MemoryStream();
     var compressedStream = _compressor.Compress(baseStream, CompressionLevel.Optimal);
 
-    Assert.NotNull(compressedStream);
-    Assert.IsType<BrotliStream>(compressedStream);
-    Assert.True(compressedStream.CanWrite);
+    compressedStream.ShouldNotBeNull();
+    compressedStream.ShouldBeOfType<BrotliStream>();
+    compressedStream.CanWrite.ShouldBeTrue();
   }
 
   [Fact]
@@ -41,9 +41,9 @@ public class BrotliStreamCompressorTest
     using var baseStream = new MemoryStream();
     var compressedStream = _compressor.Compress(baseStream, CompressionLevel.Fastest);
 
-    Assert.NotNull(compressedStream);
-    Assert.IsType<BrotliStream>(compressedStream);
-    Assert.True(compressedStream.CanWrite);
+    compressedStream.ShouldNotBeNull();
+    compressedStream.ShouldBeOfType<BrotliStream>();
+    compressedStream.CanWrite.ShouldBeTrue();
   }
 
   [Fact]
@@ -52,9 +52,9 @@ public class BrotliStreamCompressorTest
     using var baseStream = new MemoryStream();
     var compressedStream = _compressor.Compress(baseStream, CompressionLevel.SmallestSize);
 
-    Assert.NotNull(compressedStream);
-    Assert.IsType<BrotliStream>(compressedStream);
-    Assert.True(compressedStream.CanWrite);
+    compressedStream.ShouldNotBeNull();
+    compressedStream.ShouldBeOfType<BrotliStream>();
+    compressedStream.CanWrite.ShouldBeTrue();
   }
 
   [Fact]
@@ -63,9 +63,9 @@ public class BrotliStreamCompressorTest
     using var baseStream = new MemoryStream();
     var compressedStream = _compressor.Compress(baseStream, CompressionLevel.NoCompression);
 
-    Assert.NotNull(compressedStream);
-    Assert.IsType<BrotliStream>(compressedStream);
-    Assert.True(compressedStream.CanWrite);
+    compressedStream.ShouldNotBeNull();
+    compressedStream.ShouldBeOfType<BrotliStream>();
+    compressedStream.CanWrite.ShouldBeTrue();
   }
 
   [Fact]
@@ -77,7 +77,7 @@ public class BrotliStreamCompressorTest
     compressedStream.Dispose();
 
     // BaseStream should still be accessible if leaveOpen was true
-    Assert.True(baseStream.CanRead);
+    baseStream.CanRead.ShouldBeTrue();
     baseStream.Dispose();
   }
 
@@ -90,7 +90,7 @@ public class BrotliStreamCompressorTest
     compressedStream.Dispose();
 
     // BaseStream should be closed if leaveOpen was false
-    Assert.False(baseStream.CanRead);
+    baseStream.CanRead.ShouldBeFalse();
   }
 
   [Fact]
@@ -98,8 +98,8 @@ public class BrotliStreamCompressorTest
   {
     var exception = Record.Exception(() => _compressor.Compress(null!));
 
-    Assert.NotNull(exception);
-    Assert.IsType<ArgumentNullException>(exception);
+    exception.ShouldNotBeNull();
+    exception.ShouldBeOfType<ArgumentNullException>();
   }
 
   [Fact]
@@ -108,8 +108,8 @@ public class BrotliStreamCompressorTest
     using var readOnlyStream = new MemoryStream(new byte[10], writable: false);
     var exception = Record.Exception(() => _compressor.Compress(readOnlyStream));
 
-    Assert.NotNull(exception);
-    Assert.IsType<ArgumentException>(exception);
+    exception.ShouldNotBeNull();
+    exception.ShouldBeOfType<ArgumentException>();
   }
 
   [Fact]
@@ -126,9 +126,9 @@ public class BrotliStreamCompressorTest
 
     var decompressedStream = _compressor.Decompress(compressedData);
 
-    Assert.NotNull(decompressedStream);
-    Assert.IsType<BrotliStream>(decompressedStream);
-    Assert.True(decompressedStream.CanRead);
+    decompressedStream.ShouldNotBeNull();
+    decompressedStream.ShouldBeOfType<BrotliStream>();
+    decompressedStream.CanRead.ShouldBeTrue();
   }
 
   [Fact]
@@ -147,7 +147,7 @@ public class BrotliStreamCompressorTest
     decompressedStream.Dispose();
 
     // BaseStream should still be accessible if leaveOpen was true
-    Assert.True(compressedData.CanRead);
+    compressedData.CanRead.ShouldBeTrue();
     compressedData.Dispose();
   }
 
@@ -167,7 +167,7 @@ public class BrotliStreamCompressorTest
     decompressedStream.Dispose();
 
     // BaseStream should be closed if leaveOpen was false
-    Assert.False(compressedData.CanRead);
+    compressedData.CanRead.ShouldBeFalse();
   }
 
   [Fact]
@@ -175,8 +175,8 @@ public class BrotliStreamCompressorTest
   {
     var exception = Record.Exception(() => _compressor.Decompress(null!));
 
-    Assert.NotNull(exception);
-    Assert.IsType<ArgumentNullException>(exception);
+    exception.ShouldNotBeNull();
+    exception.ShouldBeOfType<ArgumentNullException>();
   }
 
   [Fact]
@@ -202,7 +202,7 @@ public class BrotliStreamCompressorTest
 
     // Verify
     var decompressedData = Encoding.UTF8.GetString(decompressedStream.ToArray());
-    Assert.Equal(originalData, decompressedData);
+    decompressedData.ShouldBe(originalData);
   }
 
   [Fact]
@@ -220,7 +220,7 @@ public class BrotliStreamCompressorTest
     }
 
     // Verify compression actually occurred
-    Assert.True(compressedStream.Length < originalBytes.Length);
+    compressedStream.Length.ShouldBeLessThan(originalBytes.Length);
 
     // Decompress
     compressedStream.Position = 0;
@@ -232,8 +232,8 @@ public class BrotliStreamCompressorTest
 
     // Verify
     var decompressedData = Encoding.UTF8.GetString(decompressedStream.ToArray());
-    Assert.Equal(originalData, decompressedData);
-    Assert.Equal(originalBytes.Length, decompressedStream.Length);
+    decompressedData.ShouldBe(originalData);
+    decompressedStream.Length.ShouldBe(originalBytes.Length);
   }
 
   [Fact]
@@ -257,7 +257,7 @@ public class BrotliStreamCompressorTest
     }
 
     // Verify
-    Assert.Empty(decompressedStream.ToArray());
+    decompressedStream.ToArray().ShouldBeEmpty();
   }
 
   [Fact]
@@ -281,6 +281,6 @@ public class BrotliStreamCompressorTest
     }
 
     // SmallestSize should produce smaller or equal output than Fastest
-    Assert.True(smallestStream.Length <= fastestStream.Length);
+    smallestStream.Length.ShouldBeLessThanOrEqualTo(fastestStream.Length);
   }
 }

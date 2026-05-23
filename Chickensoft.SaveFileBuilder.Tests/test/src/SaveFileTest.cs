@@ -23,7 +23,7 @@ public class SaveFileTest
   }
 
   [Fact]
-  public void CanSaveSynchronously_IsTrue() => Assert.True(SaveFile.CanSaveSynchronously);
+  public void CanSaveSynchronously_IsTrue() => SaveFile.CanSaveSynchronously.ShouldBeTrue();
 
   [Fact]
   public void Save_WritesCompressesAndSerializes()
@@ -94,7 +94,7 @@ public class SaveFileTest
     MockIO.Verify();
     MockCompressor.Verify();
     MockSerializer.Verify();
-    Assert.Equal("test", data);
+    data.ShouldBe("test");
   }
 
   [Fact]
@@ -113,7 +113,7 @@ public class SaveFileTest
     // Assert
     MockIO.Verify();
     MockSerializer.Verify();
-    Assert.Equal("test", data);
+    data.ShouldBe("test");
   }
 
   [Fact]
@@ -127,7 +127,7 @@ public class SaveFileTest
 
     // Assert
     MockSerializer.Verify();
-    Assert.Null(data);
+    data.ShouldBeNull();
   }
 
   [Fact]
@@ -141,7 +141,7 @@ public class SaveFileTest
 
     // Assert
     MockIO.Verify();
-    Assert.True(result);
+    result.ShouldBeTrue();
   }
 
   [Fact]
@@ -161,7 +161,7 @@ public class SaveFileTest
   public void SaveAsync_CompletedSynchronously()
   {
     var task = SaveFile.SaveAsync("test", cancellationToken: TestContext.Current.CancellationToken);
-    Assert.True(task.IsCompletedSuccessfully);
+    task.IsCompletedSuccessfully.ShouldBeTrue();
   }
 
   [Fact]
@@ -169,27 +169,27 @@ public class SaveFileTest
   {
     SaveFile = new SaveFile(MockIO.Object, MockSerializer.Object, null);
     var task = SaveFile.SaveAsync("test", cancellationToken: TestContext.Current.CancellationToken);
-    Assert.True(task.IsCompletedSuccessfully);
+    task.IsCompletedSuccessfully.ShouldBeTrue();
   }
 
   [Fact]
   public void LoadAsync_CompletedSynchronously()
   {
     var task = SaveFile.LoadAsync<string>(TestContext.Current.CancellationToken);
-    Assert.True(task.IsCompletedSuccessfully);
+    task.IsCompletedSuccessfully.ShouldBeTrue();
   }
 
   [Fact]
   public void ExistsAsync_CompletedSynchronously()
   {
     var task = SaveFile.ExistsAsync(TestContext.Current.CancellationToken);
-    Assert.True(task.IsCompletedSuccessfully);
+    task.IsCompletedSuccessfully.ShouldBeTrue();
   }
 
   [Fact]
   public void DeleteAsync_CompletedSynchronously()
   {
     var task = SaveFile.DeleteAsync(TestContext.Current.CancellationToken);
-    Assert.True(task.IsCompletedSuccessfully);
+    task.IsCompletedSuccessfully.ShouldBeTrue();
   }
 }

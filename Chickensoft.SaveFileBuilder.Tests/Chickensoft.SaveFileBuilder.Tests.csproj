@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Test executor. -->
+    <!-- Coverage -->
     <PackageReference Include="coverlet.collector" Version="10.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -28,19 +28,20 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Moq" Version="4.20.72" />
-    <!-- Assertions library. -->
-    <!-- Generated mocks. -->
-    <!-- Convenience wrapper around generated mocks. -->
+    <!-- Test executor -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
-    <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <!-- Mocking -->
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <!-- Assertions -->
+    <PackageReference Include="Shouldly" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Moq" />
+    <Using Include="Shouldly" />
   </ItemGroup>
 
   <ItemGroup>

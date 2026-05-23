@@ -25,8 +25,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH, options);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -36,8 +36,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -50,8 +50,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH, context);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -64,8 +64,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonFile(FILE_PATH, typeInfo);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -79,8 +79,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, options);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -93,8 +93,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -108,8 +108,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, context);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -123,8 +123,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, typeInfo);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.True(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeTrue();
   }
 
   [Fact]
@@ -138,8 +138,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object, options);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.False(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeFalse();
   }
 
   [Fact]
@@ -152,8 +152,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.False(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeFalse();
   }
 
   [Fact]
@@ -167,8 +167,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object, context);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.False(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeFalse();
   }
 
   [Fact]
@@ -182,8 +182,8 @@ public partial class SaveFileFactoryTest
     var saveFile = SaveFile.CreateGZipJsonIO(mockAsyncIO.Object, typeInfo);
 
     // Assert
-    Assert.NotNull(saveFile);
-    Assert.False(saveFile.CanSaveSynchronously);
+    saveFile.ShouldNotBeNull();
+    saveFile.CanSaveSynchronously.ShouldBeFalse();
   }
 
   [Fact]
@@ -201,16 +201,16 @@ public partial class SaveFileFactoryTest
       saveFile.Save(data);
 
       // Assert - File exists
-      Assert.True(File.Exists(tempFile));
+      File.Exists(tempFile).ShouldBeTrue();
 
       // Act - Load
       data = new TestData { Name = "Modified", Value = 0 };
       data = saveFile.Load<TestData>();
 
       // Assert - Data restored
-      Assert.NotNull(data);
-      Assert.Equal("Hello, World!", data.Name);
-      Assert.Equal(42, data.Value);
+      data.ShouldNotBeNull();
+      data.Name.ShouldBe("Hello, World!");
+      data.Value.ShouldBe(42);
     }
     finally
     {
@@ -237,23 +237,23 @@ public partial class SaveFileFactoryTest
       await saveFile.SaveAsync(data, cancellationToken: CancellationToken);
 
       // Assert - File exists
-      Assert.True(await saveFile.ExistsAsync(CancellationToken));
+      (await saveFile.ExistsAsync(CancellationToken)).ShouldBeTrue();
 
       // Act - Load
       data = new TestData { Name = "Modified", Value = 0 };
       data = await saveFile.LoadAsync<TestData>(CancellationToken);
 
       // Assert - Data restored
-      Assert.NotNull(data);
-      Assert.Equal("Async Test", data.Name);
-      Assert.Equal(99, data.Value);
+      data.ShouldNotBeNull();
+      data.Name.ShouldBe("Async Test");
+      data.Value.ShouldBe(99);
 
       // Act - Delete
       var deleted = await saveFile.DeleteAsync(CancellationToken);
 
       // Assert - File deleted
-      Assert.True(deleted);
-      Assert.False(await saveFile.ExistsAsync(CancellationToken));
+      deleted.ShouldBeTrue();
+      (await saveFile.ExistsAsync(CancellationToken)).ShouldBeFalse();
     }
     finally
     {

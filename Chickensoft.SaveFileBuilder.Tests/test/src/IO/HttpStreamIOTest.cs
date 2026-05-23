@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using Chickensoft.SaveFileBuilder.IO;
+using Shouldly;
 
 public class HttpStreamIOTest : IDisposable
 {
@@ -40,10 +41,10 @@ public class HttpStreamIOTest : IDisposable
     var uris = new HttpIORequestUris();
 
     // Assert
-    Assert.Null(uris.ReadUri);
-    Assert.Null(uris.WriteUri);
-    Assert.Null(uris.ExistsUri);
-    Assert.Null(uris.DeleteUri);
+    uris.ReadUri.ShouldBeNull();
+    uris.WriteUri.ShouldBeNull();
+    uris.ExistsUri.ShouldBeNull();
+    uris.DeleteUri.ShouldBeNull();
   }
 
   [Fact]
@@ -59,10 +60,10 @@ public class HttpStreamIOTest : IDisposable
     var uris = new HttpIORequestUris(readUri, writeUri, existsUri, deleteUri);
 
     // Assert
-    Assert.Equal(readUri, uris.ReadUri);
-    Assert.Equal(writeUri, uris.WriteUri);
-    Assert.Equal(existsUri, uris.ExistsUri);
-    Assert.Equal(deleteUri, uris.DeleteUri);
+    uris.ReadUri.ShouldBe(readUri);
+    uris.WriteUri.ShouldBe(writeUri);
+    uris.ExistsUri.ShouldBe(existsUri);
+    uris.DeleteUri.ShouldBe(deleteUri);
   }
 
   [Fact]
@@ -77,14 +78,14 @@ public class HttpStreamIOTest : IDisposable
     );
 
     // Assert
-    Assert.NotNull(uris.ReadUri);
-    Assert.Equal("api/read", uris.ReadUri.ToString());
-    Assert.NotNull(uris.WriteUri);
-    Assert.Equal("api/write", uris.WriteUri.ToString());
-    Assert.NotNull(uris.ExistsUri);
-    Assert.Equal("api/exists", uris.ExistsUri.ToString());
-    Assert.NotNull(uris.DeleteUri);
-    Assert.Equal("api/delete", uris.DeleteUri.ToString());
+    uris.ReadUri.ShouldNotBeNull();
+    uris.ReadUri.ToString().ShouldBe("api/read");
+    uris.WriteUri.ShouldNotBeNull();
+    uris.WriteUri.ToString().ShouldBe("api/write");
+    uris.ExistsUri.ShouldNotBeNull();
+    uris.ExistsUri.ToString().ShouldBe("api/exists");
+    uris.DeleteUri.ShouldNotBeNull();
+    uris.DeleteUri.ToString().ShouldBe("api/delete");
   }
 
   [Fact]
@@ -99,10 +100,10 @@ public class HttpStreamIOTest : IDisposable
     );
 
     // Assert
-    Assert.Null(uris.ReadUri);
-    Assert.Null(uris.WriteUri);
-    Assert.Null(uris.ExistsUri);
-    Assert.Null(uris.DeleteUri);
+    uris.ReadUri.ShouldBeNull();
+    uris.WriteUri.ShouldBeNull();
+    uris.ExistsUri.ShouldBeNull();
+    uris.DeleteUri.ShouldBeNull();
   }
 
   [Fact]
@@ -117,12 +118,12 @@ public class HttpStreamIOTest : IDisposable
     );
 
     // Assert
-    Assert.NotNull(uris.ReadUri);
-    Assert.Equal("api/read", uris.ReadUri.ToString());
-    Assert.Null(uris.WriteUri);
-    Assert.NotNull(uris.ExistsUri);
-    Assert.Equal("api/exists", uris.ExistsUri.ToString());
-    Assert.Null(uris.DeleteUri);
+    uris.ReadUri.ShouldNotBeNull();
+    uris.ReadUri.ToString().ShouldBe("api/read");
+    uris.WriteUri.ShouldBeNull();
+    uris.ExistsUri.ShouldNotBeNull();
+    uris.ExistsUri.ToString().ShouldBe("api/exists");
+    uris.DeleteUri.ShouldBeNull();
   }
 
   [Fact]
@@ -147,10 +148,10 @@ public class HttpStreamIOTest : IDisposable
       DeleteUri = deleteUri
     };
     // Assert
-    Assert.Equal(readUri, uris.ReadUri);
-    Assert.Equal(writeUri, uris.WriteUri);
-    Assert.Equal(existsUri, uris.ExistsUri);
-    Assert.Equal(deleteUri, uris.DeleteUri);
+    uris.ReadUri.ShouldBe(readUri);
+    uris.WriteUri.ShouldBe(writeUri);
+    uris.ExistsUri.ShouldBe(existsUri);
+    uris.DeleteUri.ShouldBe(deleteUri);
   }
 
   #endregion
@@ -164,9 +165,9 @@ public class HttpStreamIOTest : IDisposable
     using var streamIO = new HttpStreamIO();
 
     // Assert
-    Assert.NotNull(streamIO);
-    Assert.NotNull(streamIO.ReadHeaders);
-    Assert.NotNull(streamIO.WriteHeaders);
+    streamIO.ShouldNotBeNull();
+    streamIO.ReadHeaders.ShouldNotBeNull();
+    streamIO.WriteHeaders.ShouldNotBeNull();
   }
 
   [Fact]
@@ -179,7 +180,7 @@ public class HttpStreamIOTest : IDisposable
     using var streamIO = new HttpStreamIO(timeout);
 
     // Assert
-    Assert.NotNull(streamIO);
+    streamIO.ShouldNotBeNull();
   }
 
   [Fact]
@@ -192,7 +193,7 @@ public class HttpStreamIOTest : IDisposable
     using var streamIO = new HttpStreamIO(baseAddress);
 
     // Assert
-    Assert.NotNull(streamIO);
+    streamIO.ShouldNotBeNull();
   }
 
   [Fact]
@@ -206,7 +207,7 @@ public class HttpStreamIOTest : IDisposable
     using var streamIO = new HttpStreamIO(baseAddress, timeout);
 
     // Assert
-    Assert.NotNull(streamIO);
+    streamIO.ShouldNotBeNull();
   }
 
   [Fact]
@@ -219,7 +220,7 @@ public class HttpStreamIOTest : IDisposable
     using var streamIO = new HttpStreamIO(baseAddress);
 
     // Assert
-    Assert.NotNull(streamIO);
+    streamIO.ShouldNotBeNull();
   }
 
   [Fact]
@@ -233,7 +234,7 @@ public class HttpStreamIOTest : IDisposable
     using var streamIO = new HttpStreamIO(baseAddress, timeout);
 
     // Assert
-    Assert.NotNull(streamIO);
+    streamIO.ShouldNotBeNull();
   }
 
   [Fact]
@@ -248,9 +249,7 @@ public class HttpStreamIOTest : IDisposable
     streamIO.Dispose();
 
     // Assert - Verify client is disposed by trying to send a request
-    await Assert.ThrowsAsync<ObjectDisposedException>(async () =>
-      await client.GetAsync("http://test.com", CancellationToken)
-    );
+    await Should.ThrowAsync<ObjectDisposedException>(async () => await client.GetAsync("http://test.com", CancellationToken));
   }
 
   [Fact]
@@ -266,7 +265,7 @@ public class HttpStreamIOTest : IDisposable
 
     // Assert - client should still be usable
     var exception = Record.Exception(() => _ = client.BaseAddress);
-    Assert.Null(exception);
+    exception.ShouldBeNull();
     client.Dispose();
   }
 
@@ -284,8 +283,8 @@ public class HttpStreamIOTest : IDisposable
     };
 
     // Assert
-    Assert.Equal(readUri, streamIO.RequestUris.ReadUri);
-    Assert.Equal(writeUri, streamIO.RequestUris.WriteUri);
+    streamIO.RequestUris.ReadUri.ShouldBe(readUri);
+    streamIO.RequestUris.WriteUri.ShouldBe(writeUri);
   }
 
   #endregion
@@ -303,7 +302,7 @@ public class HttpStreamIOTest : IDisposable
     var headerExists = streamIO.ReadHeaders.Contains("X-Custom-Header");
 
     // Assert
-    Assert.True(headerExists);
+    headerExists.ShouldBeTrue();
   }
 
   [Fact]
@@ -317,7 +316,7 @@ public class HttpStreamIOTest : IDisposable
     var headerExists = streamIO.WriteHeaders.Contains("X-Custom-Header");
 
     // Assert
-    Assert.True(headerExists);
+    headerExists.ShouldBeTrue();
   }
 
   [Fact]
@@ -330,7 +329,7 @@ public class HttpStreamIOTest : IDisposable
     streamIO.WriteHeaders.ContentLength = 1024;
 
     // Assert
-    Assert.Equal(1024, streamIO.WriteHeaders.ContentLength);
+    streamIO.WriteHeaders.ContentLength.ShouldBe(1024);
   }
 
   [Fact]
@@ -345,9 +344,9 @@ public class HttpStreamIOTest : IDisposable
     streamIO.WriteHeaders.Add("X-Header-3", "value3");
 
     // Assert
-    Assert.True(streamIO.WriteHeaders.Contains("X-Header-1"));
-    Assert.True(streamIO.WriteHeaders.Contains("X-Header-2"));
-    Assert.True(streamIO.WriteHeaders.Contains("X-Header-3"));
+    streamIO.WriteHeaders.Contains("X-Header-1").ShouldBeTrue();
+    streamIO.WriteHeaders.Contains("X-Header-2").ShouldBeTrue();
+    streamIO.WriteHeaders.Contains("X-Header-3").ShouldBeTrue();
   }
 
   #endregion
@@ -369,11 +368,11 @@ public class HttpStreamIOTest : IDisposable
     using var stream = await streamIO.ReadAsync(CancellationToken);
 
     // Assert
-    Assert.NotNull(stream);
+    stream.ShouldNotBeNull();
     stream.Position = 0;
     using var reader = new StreamReader(stream);
     var actualContent = await reader.ReadToEndAsync(CancellationToken);
-    Assert.Equal(expectedContent, actualContent);
+    actualContent.ShouldBe(expectedContent);
   }
 
   [Fact]
@@ -390,8 +389,8 @@ public class HttpStreamIOTest : IDisposable
     using var stream = await streamIO.ReadAsync(CancellationToken);
 
     // Assert
-    Assert.NotNull(stream);
-    Assert.Equal(0, stream.Length);
+    stream.ShouldNotBeNull();
+    stream.Length.ShouldBe(0);
   }
 
   [Fact]
@@ -406,9 +405,7 @@ public class HttpStreamIOTest : IDisposable
     };
 
     // Act & Assert
-    await Assert.ThrowsAsync<TaskCanceledException>(
-      async () => await streamIO.ReadAsync(cts.Token)
-    );
+    await Should.ThrowAsync<TaskCanceledException>(async () => await streamIO.ReadAsync(cts.Token));
   }
 
   [Fact]
@@ -422,9 +419,7 @@ public class HttpStreamIOTest : IDisposable
     };
 
     // Act & Assert
-    await Assert.ThrowsAsync<HttpRequestException>(
-      async () => await streamIO.ReadAsync(CancellationToken)
-    );
+    await Should.ThrowAsync<HttpRequestException>(async () => await streamIO.ReadAsync(CancellationToken));
   }
 
   [Fact]
@@ -441,7 +436,7 @@ public class HttpStreamIOTest : IDisposable
     using var stream = await streamIO.ReadAsync(CancellationToken);
 
     // Assert
-    Assert.Equal(0, stream.Length);
+    stream.Length.ShouldBe(0);
   }
 
   [Fact]
@@ -459,7 +454,7 @@ public class HttpStreamIOTest : IDisposable
     using var stream = await streamIO.ReadAsync(CancellationToken);
 
     // Assert
-    Assert.Equal(largeContent.Length, stream.Length);
+    stream.Length.ShouldBe(largeContent.Length);
   }
 
   #endregion
@@ -482,8 +477,8 @@ public class HttpStreamIOTest : IDisposable
     await streamIO.WriteAsync(stream, CancellationToken);
 
     // Assert
-    Assert.True(_mockHandler.RequestReceived);
-    Assert.Equal(HttpMethod.Post, _mockHandler.LastRequest?.Method);
+    _mockHandler.RequestReceived.ShouldBeTrue();
+    _mockHandler.LastRequest?.Method.ShouldBe(HttpMethod.Post);
   }
 
   [Fact]
@@ -504,7 +499,7 @@ public class HttpStreamIOTest : IDisposable
     await streamIO.WriteAsync(stream, CancellationToken);
 
     // Assert
-    Assert.Equal(streamLength, _mockHandler.LastRequest?.Content?.Headers.ContentLength);
+    _mockHandler.LastRequest?.Content?.Headers.ContentLength.ShouldBe(streamLength);
 
   }
 
@@ -525,7 +520,7 @@ public class HttpStreamIOTest : IDisposable
     await streamIO.WriteAsync(stream, CancellationToken);
 
     // Assert
-    Assert.Equal(5, _mockHandler.LastRequest?.Content?.Headers.ContentLength);
+    _mockHandler.LastRequest?.Content?.Headers.ContentLength.ShouldBe(5);
   }
 
   [Fact]
@@ -546,12 +541,12 @@ public class HttpStreamIOTest : IDisposable
 
     // Assert
     IEnumerable<string>? contentTypeValues = [];
-    Assert.True(_mockHandler.LastRequest?.Content?.Headers.TryGetValues("X-Custom-Header", out contentTypeValues));
-    Assert.NotNull(contentTypeValues);
-    Assert.Single(contentTypeValues);
-    Assert.Equal("custom-value", contentTypeValues.First());
+    _mockHandler.LastRequest?.Content?.Headers.TryGetValues("X-Custom-Header", out contentTypeValues).ShouldBeTrue();
+    contentTypeValues.ShouldNotBeNull();
+    contentTypeValues.ShouldHaveSingleItem();
+    contentTypeValues.Single().ShouldBe("custom-value");
 
-    Assert.Equal("application/json", _mockHandler.LastRequest?.Content?.Headers.ContentType?.MediaType);
+    _mockHandler.LastRequest?.Content?.Headers.ContentType?.MediaType.ShouldBe("application/json");
   }
 
   [Fact]
@@ -567,9 +562,7 @@ public class HttpStreamIOTest : IDisposable
     };
 
     // Act & Assert
-    await Assert.ThrowsAsync<TaskCanceledException>(
-      async () => await streamIO.WriteAsync(stream, cts.Token)
-    );
+    await Should.ThrowAsync<TaskCanceledException>(async () => await streamIO.WriteAsync(stream, cts.Token));
   }
 
   [Fact]
@@ -587,7 +580,7 @@ public class HttpStreamIOTest : IDisposable
     await streamIO.WriteAsync(stream, CancellationToken);
 
     // Assert
-    Assert.Equal(0, _mockHandler.LastRequest?.Content?.Headers.ContentLength);
+    _mockHandler.LastRequest?.Content?.Headers.ContentLength.ShouldBe(0);
   }
 
   [Fact]
@@ -607,7 +600,7 @@ public class HttpStreamIOTest : IDisposable
     await streamIO.WriteAsync(stream, CancellationToken);
 
     // Assert
-    Assert.Equal(largeData.Length, _mockHandler.LastRequest?.Content?.Headers.ContentLength);
+    _mockHandler.LastRequest?.Content?.Headers.ContentLength.ShouldBe(largeData.Length);
   }
 
   #endregion
@@ -628,7 +621,7 @@ public class HttpStreamIOTest : IDisposable
     var exists = await streamIO.ExistsAsync(CancellationToken);
 
     // Assert
-    Assert.True(exists);
+    exists.ShouldBeTrue();
   }
 
   [Fact]
@@ -645,7 +638,7 @@ public class HttpStreamIOTest : IDisposable
     var exists = await streamIO.ExistsAsync(CancellationToken);
 
     // Assert
-    Assert.False(exists);
+    exists.ShouldBeFalse();
   }
 
   [Fact]
@@ -662,7 +655,7 @@ public class HttpStreamIOTest : IDisposable
     var exists = await streamIO.ExistsAsync(CancellationToken);
 
     // Assert
-    Assert.False(exists);
+    exists.ShouldBeFalse();
   }
 
   [Fact]
@@ -677,9 +670,7 @@ public class HttpStreamIOTest : IDisposable
     };
 
     // Act & Assert
-    await Assert.ThrowsAsync<TaskCanceledException>(
-      async () => await streamIO.ExistsAsync(cts.Token)
-    );
+    await Should.ThrowAsync<TaskCanceledException>(async () => await streamIO.ExistsAsync(cts.Token));
   }
 
   #endregion
@@ -700,7 +691,7 @@ public class HttpStreamIOTest : IDisposable
     var deleted = await streamIO.DeleteAsync(CancellationToken);
 
     // Assert
-    Assert.True(deleted);
+    deleted.ShouldBeTrue();
   }
 
   [Fact]
@@ -717,7 +708,7 @@ public class HttpStreamIOTest : IDisposable
     var deleted = await streamIO.DeleteAsync(CancellationToken);
 
     // Assert
-    Assert.True(deleted);
+    deleted.ShouldBeTrue();
   }
 
   [Fact]
@@ -734,7 +725,7 @@ public class HttpStreamIOTest : IDisposable
     var deleted = await streamIO.DeleteAsync(CancellationToken);
 
     // Assert
-    Assert.False(deleted);
+    deleted.ShouldBeFalse();
   }
 
   [Fact]
@@ -751,7 +742,7 @@ public class HttpStreamIOTest : IDisposable
     var deleted = await streamIO.DeleteAsync(CancellationToken);
 
     // Assert
-    Assert.False(deleted);
+    deleted.ShouldBeFalse();
   }
 
   [Fact]
@@ -766,9 +757,7 @@ public class HttpStreamIOTest : IDisposable
     };
 
     // Act & Assert
-    await Assert.ThrowsAsync<TaskCanceledException>(
-      async () => await streamIO.DeleteAsync(cts.Token)
-    );
+    await Should.ThrowAsync<TaskCanceledException>(async () => await streamIO.DeleteAsync(cts.Token));
   }
 
   [Fact]
@@ -785,8 +774,8 @@ public class HttpStreamIOTest : IDisposable
     await streamIO.DeleteAsync(CancellationToken);
 
     // Assert
-    Assert.True(_mockHandler.RequestReceived);
-    Assert.Equal(HttpMethod.Delete, _mockHandler.LastRequest?.Method);
+    _mockHandler.RequestReceived.ShouldBeTrue();
+    _mockHandler.LastRequest?.Method.ShouldBe(HttpMethod.Delete);
   }
 
   #endregion
@@ -805,37 +794,37 @@ public class HttpStreamIOTest : IDisposable
     using var stream = await streamIO.ReadAsync(CancellationToken);
 
     // CanRead / CanSeek / CanWrite
-    Assert.True(stream.CanRead);
-    Assert.True(stream.CanSeek);
+    stream.CanRead.ShouldBeTrue();
+    stream.CanSeek.ShouldBeTrue();
     _ = stream.CanWrite; // just exercise the property; value depends on underlying stream
 
     // Length
-    Assert.True(stream.Length > 0);
+    stream.Length.ShouldBeGreaterThan(0);
 
     // Position get/set
     stream.Position = 0;
-    Assert.Equal(0, stream.Position);
+    stream.Position.ShouldBe(0);
 
     // Flush
     var flushException = Record.Exception(stream.Flush);
-    Assert.Null(flushException);
+    flushException.ShouldBeNull();
 
     // Read
     stream.Position = 0;
     var buffer = new byte[3];
     var bytesRead = stream.Read(buffer, 0, 3);
-    Assert.True(bytesRead > 0);
+    bytesRead.ShouldBeGreaterThan(0);
 
     // Seek
     var pos = stream.Seek(0, SeekOrigin.Begin);
-    Assert.Equal(0, pos);
+    pos.ShouldBe(0);
 
     // SetLength — underlying HTTP response stream is read-only
-    Assert.Throws<NotSupportedException>(() => stream.SetLength(stream.Length));
+    Should.Throw<NotSupportedException>(() => stream.SetLength(stream.Length));
 
     // Write — underlying HTTP response stream is read-only
     var writeBuffer = new byte[] { 1, 2, 3 };
-    Assert.Throws<NotSupportedException>(() => stream.Write(writeBuffer, 0, writeBuffer.Length));
+    Should.Throw<NotSupportedException>(() => stream.Write(writeBuffer, 0, writeBuffer.Length));
   }
 
   #endregion
@@ -853,7 +842,7 @@ public class HttpStreamIOTest : IDisposable
     // Act & Assert
     streamIO.Dispose();
     var exception = Record.Exception(streamIO.Dispose);
-    Assert.Null(exception);
+    exception.ShouldBeNull();
   }
 
   [Fact]
@@ -869,7 +858,7 @@ public class HttpStreamIOTest : IDisposable
 
     // Assert - client should still be usable
     var exception = Record.Exception(() => _ = client.BaseAddress);
-    Assert.Null(exception);
+    exception.ShouldBeNull();
     client.Dispose();
   }
 

@@ -27,19 +27,19 @@ public class SaveFileAsyncTest
   }
 
   [Fact]
-  public void CanSaveSynchronously_IsFalse() => Assert.False(SaveFile.CanSaveSynchronously);
+  public void CanSaveSynchronously_IsFalse() => SaveFile.CanSaveSynchronously.ShouldBeFalse();
 
   [Fact]
-  public void Save_ThrowsInvalidOperationException() => Assert.Throws<InvalidOperationException>(() => SaveFile.Save("test"));
+  public void Save_ThrowsInvalidOperationException() => Should.Throw<InvalidOperationException>(() => SaveFile.Save("test"));
 
   [Fact]
-  public void Load_ThrowsInvalidOperationException() => Assert.Throws<InvalidOperationException>(SaveFile.Load<string>);
+  public void Load_ThrowsInvalidOperationException() => Should.Throw<InvalidOperationException>(SaveFile.Load<string>);
 
   [Fact]
-  public void Exists_ThrowsInvalidOperationException() => Assert.Throws<InvalidOperationException>(() => SaveFile.Exists());
+  public void Exists_ThrowsInvalidOperationException() => Should.Throw<InvalidOperationException>(() => SaveFile.Exists());
 
   [Fact]
-  public void Delete_ThrowsInvalidOperationException() => Assert.Throws<InvalidOperationException>(SaveFile.Delete);
+  public void Delete_ThrowsInvalidOperationException() => Should.Throw<InvalidOperationException>(SaveFile.Delete);
 
   [Fact]
   public void Constructor_WithIStreamIOAndIAsyncStreamSerializer_CreatesInstanceSuccessfully()
@@ -52,7 +52,7 @@ public class SaveFileAsyncTest
     var saveFile = new SaveFile(mockStreamIO.Object, mockAsyncSerializer.Object, MockCompressor.Object);
 
     // Assert
-    Assert.NotNull(saveFile);
+    saveFile.ShouldNotBeNull();
   }
 
   [Fact]
@@ -66,7 +66,7 @@ public class SaveFileAsyncTest
     var saveFile = new SaveFile(mockAsyncStreamIO.Object, mockSerializer.Object, MockCompressor.Object);
 
     // Assert
-    Assert.NotNull(saveFile);
+    saveFile.ShouldNotBeNull();
   }
 
   [Fact]
@@ -138,7 +138,7 @@ public class SaveFileAsyncTest
     MockAsyncIO.Verify();
     MockCompressor.Verify();
     MockAsyncSerializer.Verify();
-    Assert.Equal("test", data);
+    data.ShouldBe("test");
   }
 
   [Fact]
@@ -157,7 +157,7 @@ public class SaveFileAsyncTest
     // Assert
     MockAsyncIO.Verify();
     MockAsyncSerializer.Verify();
-    Assert.Equal("test", data);
+    data.ShouldBe("test");
   }
 
   [Fact]
@@ -171,7 +171,7 @@ public class SaveFileAsyncTest
 
     // Assert
     MockAsyncSerializer.Verify();
-    Assert.Null(data);
+    data.ShouldBeNull();
   }
 
   [Fact]
@@ -185,7 +185,7 @@ public class SaveFileAsyncTest
 
     // Assert
     MockAsyncIO.Verify();
-    Assert.True(result);
+    result.ShouldBeTrue();
   }
 
   [Fact]
@@ -199,6 +199,6 @@ public class SaveFileAsyncTest
 
     // Assert
     MockAsyncIO.Verify();
-    Assert.True(result);
+    result.ShouldBeTrue();
   }
 }

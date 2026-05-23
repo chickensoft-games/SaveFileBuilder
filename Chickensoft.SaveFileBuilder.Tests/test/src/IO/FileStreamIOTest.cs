@@ -35,7 +35,7 @@ public class FileStreamIOTest : IDisposable
     var streamIO = new FileStreamIO(fileInfo);
 
     // Assert
-    Assert.Equal(fileInfo.FullName, streamIO.FileInfo.FullName);
+    streamIO.FileInfo.FullName.ShouldBe(fileInfo.FullName);
   }
 
   [Fact]
@@ -48,7 +48,7 @@ public class FileStreamIOTest : IDisposable
     var streamIO = new FileStreamIO(fileName);
 
     // Assert
-    Assert.Equal(fileName, streamIO.FileInfo.FullName);
+    streamIO.FileInfo.FullName.ShouldBe(fileName);
   }
 
   [Fact]
@@ -63,11 +63,11 @@ public class FileStreamIOTest : IDisposable
     using var stream = streamIO.Read();
 
     // Assert
-    Assert.NotNull(stream);
-    Assert.True(stream.CanRead);
+    stream.ShouldNotBeNull();
+    stream.CanRead.ShouldBeTrue();
     using var reader = new StreamReader(stream);
     var content = reader.ReadToEnd();
-    Assert.Equal("test content", content);
+    content.ShouldBe("test content");
   }
 
   [Fact]
@@ -78,7 +78,7 @@ public class FileStreamIOTest : IDisposable
     var streamIO = new FileStreamIO(filePath);
 
     // Act & Assert
-    Assert.Throws<FileNotFoundException>(streamIO.Read);
+    Should.Throw<FileNotFoundException>(streamIO.Read);
   }
 
   [Fact]
@@ -92,9 +92,9 @@ public class FileStreamIOTest : IDisposable
     using var stream = streamIO.Write();
 
     // Assert
-    Assert.NotNull(stream);
-    Assert.True(stream.CanWrite);
-    Assert.True(File.Exists(filePath));
+    stream.ShouldNotBeNull();
+    stream.CanWrite.ShouldBeTrue();
+    File.Exists(filePath).ShouldBeTrue();
   }
 
   [Fact]
@@ -109,8 +109,8 @@ public class FileStreamIOTest : IDisposable
     using var stream = streamIO.Write();
 
     // Assert
-    Assert.NotNull(stream);
-    Assert.True(stream.CanWrite);
+    stream.ShouldNotBeNull();
+    stream.CanWrite.ShouldBeTrue();
   }
 
   [Fact]
@@ -125,9 +125,9 @@ public class FileStreamIOTest : IDisposable
     using var stream = streamIO.Write();
 
     // Assert
-    Assert.NotNull(stream);
-    Assert.True(stream.CanWrite);
-    Assert.True(Directory.Exists(subdirectory));
+    stream.ShouldNotBeNull();
+    stream.CanWrite.ShouldBeTrue();
+    Directory.Exists(subdirectory).ShouldBeTrue();
   }
 
   [Fact]
@@ -147,7 +147,7 @@ public class FileStreamIOTest : IDisposable
 
     // Assert
     var actualContent = File.ReadAllText(filePath);
-    Assert.Equal(testContent, actualContent);
+    actualContent.ShouldBe(testContent);
   }
 
   [Fact]
@@ -162,7 +162,7 @@ public class FileStreamIOTest : IDisposable
     var exists = streamIO.Exists();
 
     // Assert
-    Assert.True(exists);
+    exists.ShouldBeTrue();
   }
 
   [Fact]
@@ -176,7 +176,7 @@ public class FileStreamIOTest : IDisposable
     var exists = streamIO.Exists();
 
     // Assert
-    Assert.False(exists);
+    exists.ShouldBeFalse();
   }
 
   [Fact]
@@ -196,8 +196,8 @@ public class FileStreamIOTest : IDisposable
     var existsAfter = streamIO.Exists();
 
     // Assert
-    Assert.False(existsBefore);
-    Assert.True(existsAfter);
+    existsBefore.ShouldBeFalse();
+    existsAfter.ShouldBeTrue();
   }
 
   [Fact]
@@ -212,7 +212,7 @@ public class FileStreamIOTest : IDisposable
     streamIO.Delete();
 
     // Assert
-    Assert.False(File.Exists(filePath));
+    File.Exists(filePath).ShouldBeFalse();
   }
 
   [Fact]
@@ -224,7 +224,7 @@ public class FileStreamIOTest : IDisposable
 
     // Act & Assert
     var exception = Record.Exception(streamIO.Delete);
-    Assert.Null(exception);
+    exception.ShouldBeNull();
   }
 
   [Fact]
@@ -240,6 +240,6 @@ public class FileStreamIOTest : IDisposable
     var exists = streamIO.Exists();
 
     // Assert
-    Assert.False(exists);
+    exists.ShouldBeFalse();
   }
 }

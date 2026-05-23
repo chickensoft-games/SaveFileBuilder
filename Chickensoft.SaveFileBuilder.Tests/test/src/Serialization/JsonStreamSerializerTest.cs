@@ -25,8 +25,8 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\"Name\":\"Test\"", json);
-    Assert.Contains("\"Value\":42", json);
+    json.ShouldContain("\"Name\":\"Test\"");
+    json.ShouldContain("\"Value\":42");
   }
 
   [Fact]
@@ -47,8 +47,8 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\"name\":", json);
-    Assert.Contains("\"value\":", json);
+    json.ShouldContain("\"name\":");
+    json.ShouldContain("\"value\":");
   }
 
   [Fact]
@@ -66,8 +66,8 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\"Name\":\"Test\"", json);
-    Assert.Contains("\"Value\":42", json);
+    json.ShouldContain("\"Name\":\"Test\"");
+    json.ShouldContain("\"Value\":42");
   }
 
   [Fact]
@@ -84,7 +84,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Equal("null", json);
+    json.ShouldBe("null");
   }
 
   [Fact]
@@ -106,8 +106,8 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\"Name\":\"Complex Test with \\u0022quotes\\u0022 and \\n newlines\"", json);
-    Assert.Contains("\"Value\":2147483647", json);
+    json.ShouldContain("\"Name\":\"Complex Test with \\u0022quotes\\u0022 and \\n newlines\"");
+    json.ShouldContain("\"Value\":2147483647");
   }
 
   #endregion
@@ -129,8 +129,8 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\"Name\":\"AsyncTest\"", json);
-    Assert.Contains("\"Value\":123", json);
+    json.ShouldContain("\"Name\":\"AsyncTest\"");
+    json.ShouldContain("\"Value\":123");
   }
 
   [Fact]
@@ -151,7 +151,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\n", json); // Indented JSON contains newlines
+    json.ShouldContain("\n"); // Indented JSON contains newlines
   }
 
   [Fact]
@@ -169,8 +169,8 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Contains("\"Name\":\"AsyncTest\"", json);
-    Assert.Contains("\"Value\":123", json);
+    json.ShouldContain("\"Name\":\"AsyncTest\"");
+    json.ShouldContain("\"Value\":123");
   }
 
   [Fact]
@@ -185,9 +185,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     cts.Cancel();
 
     // Act & Assert
-    await Assert.ThrowsAsync<TaskCanceledException>(
-      async () => await serializer.SerializeAsync(stream, testData, cts.Token)
-    );
+    await Should.ThrowAsync<TaskCanceledException>(async () => await serializer.SerializeAsync(stream, testData, cts.Token));
   }
 
   [Fact]
@@ -204,7 +202,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     // Assert
     stream.Position = 0;
     var json = Encoding.UTF8.GetString(stream.ToArray());
-    Assert.Equal("null", json);
+    json.ShouldBe("null");
   }
 
   #endregion
@@ -224,9 +222,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("DeserializeTest", result.Name);
-    Assert.Equal(789, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("DeserializeTest");
+    result.Value.ShouldBe(789);
   }
 
   [Fact]
@@ -245,9 +243,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("DeserializeTest", result.Name);
-    Assert.Equal(789, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("DeserializeTest");
+    result.Value.ShouldBe(789);
   }
 
   [Fact]
@@ -263,9 +261,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("DeserializeTest", result.Name);
-    Assert.Equal(789, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("DeserializeTest");
+    result.Value.ShouldBe(789);
   }
 
   [Fact]
@@ -281,7 +279,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = serializer.Deserialize<string>(stream);
 
     // Assert
-    Assert.Null(result);
+    result.ShouldBeNull();
   }
 
   [Fact]
@@ -294,9 +292,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     using var stream = new MemoryStream(Encoding.UTF8.GetBytes(invalidJson));
 
     // Act & Assert
-    Assert.Throws<JsonException>(
-      () => serializer.Deserialize<TestData>(stream)
-    );
+    Should.Throw<JsonException>(() => serializer.Deserialize<TestData>(stream));
   }
 
   [Fact]
@@ -308,9 +304,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     using var stream = new MemoryStream();
 
     // Act & Assert
-    Assert.Throws<JsonException>(
-      () => serializer.Deserialize<TestData>(stream)
-    );
+    Should.Throw<JsonException>(() => serializer.Deserialize<TestData>(stream));
   }
 
   #endregion
@@ -330,9 +324,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = await serializer.DeserializeAsync<TestData>(stream, CancellationToken);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("AsyncDeserializeTest", result.Name);
-    Assert.Equal(999, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("AsyncDeserializeTest");
+    result.Value.ShouldBe(999);
   }
 
   [Fact]
@@ -351,9 +345,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = await serializer.DeserializeAsync<TestData>(stream, CancellationToken);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("AsyncDeserializeTest", result.Name);
-    Assert.Equal(999, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("AsyncDeserializeTest");
+    result.Value.ShouldBe(999);
   }
 
   [Fact]
@@ -369,9 +363,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = await serializer.DeserializeAsync<TestData>(stream, CancellationToken);
 
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("AsyncDeserializeTest", result.Name);
-    Assert.Equal(999, result.Value);
+    result.ShouldNotBeNull();
+    result.Name.ShouldBe("AsyncDeserializeTest");
+    result.Value.ShouldBe(999);
   }
 
   [Fact]
@@ -386,9 +380,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     cts.Cancel();
 
     // Act & Assert
-    await Assert.ThrowsAsync<TaskCanceledException>(
-      async () => await serializer.DeserializeAsync<TestData>(stream, cts.Token)
-    );
+    await Should.ThrowAsync<TaskCanceledException>(async () => await serializer.DeserializeAsync<TestData>(stream, cts.Token));
   }
 
   [Fact]
@@ -404,7 +396,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var result = await serializer.DeserializeAsync<string>(stream, CancellationToken);
 
     // Assert
-    Assert.Null(result);
+    result.ShouldBeNull();
   }
 
   [Fact]
@@ -417,9 +409,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     using var stream = new MemoryStream(Encoding.UTF8.GetBytes(invalidJson));
 
     // Act & Assert
-    await Assert.ThrowsAsync<JsonException>(
-      async () => await serializer.DeserializeAsync<TestData>(stream, CancellationToken)
-    );
+    await Should.ThrowAsync<JsonException>(async () => await serializer.DeserializeAsync<TestData>(stream, CancellationToken));
   }
 
   [Fact]
@@ -431,9 +421,7 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     using var stream = new MemoryStream();
 
     // Act & Assert
-    await Assert.ThrowsAsync<JsonException>(
-      async () => await serializer.DeserializeAsync<TestData>(stream, CancellationToken)
-    );
+    await Should.ThrowAsync<JsonException>(async () => await serializer.DeserializeAsync<TestData>(stream, CancellationToken));
   }
 
   #endregion
@@ -461,9 +449,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var deserializedData = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -487,9 +475,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var deserializedData = await serializer.DeserializeAsync<TestData>(stream, CancellationToken);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -513,9 +501,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var deserializedData = deserializeSerializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -539,9 +527,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var deserializedData = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   [Fact]
@@ -565,9 +553,9 @@ public class JsonStreamSerializerTest(ITestContextAccessor testContextAccessor)
     var deserializedData = serializer.Deserialize<TestData>(stream);
 
     // Assert
-    Assert.NotNull(deserializedData);
-    Assert.Equal(originalData.Name, deserializedData.Name);
-    Assert.Equal(originalData.Value, deserializedData.Value);
+    deserializedData.ShouldNotBeNull();
+    deserializedData.Name.ShouldBe(originalData.Name);
+    deserializedData.Value.ShouldBe(originalData.Value);
   }
 
   #endregion
