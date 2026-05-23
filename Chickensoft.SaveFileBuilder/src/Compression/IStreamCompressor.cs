@@ -8,7 +8,7 @@ public interface IStreamCompressor
 {
   /// <summary>Provide a compression stream using the compression level, and optionally leaves the base stream open.</summary>
   /// <param name="stream">The base stream.</param>
-  /// <param name="compressionLevel">Compression level whether to emphasize speed or efficiency.</param>
+  /// <param name="compressionLevel">Compression level (whether to emphasize speed or efficiency).</param>
   /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open after disposing the compression stream; otherwise <see langword="false"/>.</param>
   /// <returns>The compression stream.</returns>
   Stream Compress(Stream stream, CompressionLevel compressionLevel = default, bool leaveOpen = default);
