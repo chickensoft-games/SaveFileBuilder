@@ -5,7 +5,7 @@ using Chickensoft.SaveFileBuilder.IO;
 
 public class FileStreamIOTest : IDisposable
 {
-  private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), "FileStreamIOTest");
+  private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), nameof(FileStreamIOTest));
   private readonly string _testFileName = "test.txt";
 
   public FileStreamIOTest()
