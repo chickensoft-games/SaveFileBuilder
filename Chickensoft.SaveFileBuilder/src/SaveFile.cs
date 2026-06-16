@@ -149,9 +149,17 @@ public partial class SaveFile : ISaveFile
       throw SynchronousOperationNotAllowedException();
     }
 
-    using var ioStream = _io!.Write();
-    using var compressionStream = _compressor?.Compress(ioStream, compressionLevel);
-    _serializer!.Serialize(compressionStream ?? ioStream, data);
+    // Create a memory stream to hold the serialized and compressed data.
+    // If any of the operations fail, the buffer will be disposed of and the underlying I/O source will not be affected.
+    using var buffer = new MemoryStream();
+    using (var compressionStream = _compressor?.Compress(buffer, compressionLevel, true))
+    {
+      _serializer!.Serialize(compressionStream ?? buffer, data);
+    }
+    buffer.Position = 0;
+
+    // Write the buffer to the underlying I/O source.
+    _io!.Write(buffer);
   }
 
   /// <inheritdoc />
@@ -187,34 +195,30 @@ public partial class SaveFile : ISaveFile
   /// <inheritdoc />
   public async ValueTask SaveAsync<TData>(TData data, CompressionLevel compressionLevel = default, CancellationToken cancellationToken = default)
   {
-    if (_asyncIO is null)
-    {
-      await using var ioStream = _io!.Write();
-      await using var compressionStream = _compressor?.Compress(ioStream, compressionLevel);
-      await serialize(compressionStream ?? ioStream);
-    }
-    else
-    {
-      await using var writeStream = new MemoryStream();
-      await using (var compressionStream = _compressor?.Compress(writeStream, compressionLevel, true))
-      {
-        await serialize(compressionStream ?? writeStream);
-      }
-      writeStream.Position = 0;
-
-      await _asyncIO.WriteAsync(writeStream, cancellationToken);
-    }
-
-    async Task serialize(Stream stream)
+    // Create a memory stream to hold the serialized and compressed data.
+    // If any of the operations fail, the buffer will be disposed of and the underlying I/O source will not be affected.
+    await using var buffer = new MemoryStream();
+    await using (var compressionStream = _compressor?.Compress(buffer, compressionLevel, true))
     {
       if (_asyncSerializer is not null)
       {
-        await _asyncSerializer.SerializeAsync(stream, data, cancellationToken);
+        await _asyncSerializer.SerializeAsync(compressionStream ?? buffer, data, cancellationToken);
       }
       else
       {
-        _serializer!.Serialize(stream, data);
+        _serializer!.Serialize(compressionStream ?? buffer, data);
       }
+    }
+    buffer.Position = 0;
+
+    // Write the buffer to the underlying I/O source, either synchronously or asynchronously based on the availability of _asyncIO.
+    if (_asyncIO is not null)
+    {
+      await _asyncIO.WriteAsync(buffer, cancellationToken);
+    }
+    else
+    {
+      _io!.Write(buffer);
     }
   }
 

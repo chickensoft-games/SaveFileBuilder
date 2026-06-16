@@ -1,6 +1,7 @@
 namespace Chickensoft.SaveFileBuilder.Tests.IO;
 
 using System.IO;
+using System.Text;
 using Chickensoft.SaveFileBuilder.IO;
 
 public class FileStreamIOTest : IDisposable
@@ -82,72 +83,102 @@ public class FileStreamIOTest : IDisposable
   }
 
   [Fact]
-  public void Write_NonExistingFile_CreatesFileAndReturnsWritableStream()
+  public void Write_NonExistingFile_CreatesFileWithCorrectContent()
   {
     // Arrange
     var filePath = GetTestFilePath();
     var streamIO = new FileStreamIO(filePath);
+    var expectedContent = "test write content";
 
     // Act
-    using var stream = streamIO.Write();
+    using var data = new MemoryStream(Encoding.UTF8.GetBytes(expectedContent));
+    streamIO.Write(data);
 
     // Assert
-    stream.ShouldNotBeNull();
-    stream.CanWrite.ShouldBeTrue();
     File.Exists(filePath).ShouldBeTrue();
+    File.ReadAllText(filePath).ShouldBe(expectedContent);
   }
 
   [Fact]
-  public void Write_ExistingFile_ReturnsWritableStream()
+  public void Write_ExistingFile_ReplacesContent()
   {
     // Arrange
     var filePath = GetTestFilePath();
-    File.WriteAllText(filePath, "existing content");
+    File.WriteAllText(filePath, "old content");
     var streamIO = new FileStreamIO(filePath);
+    var newContent = "new content";
 
     // Act
-    using var stream = streamIO.Write();
+    using var data = new MemoryStream(Encoding.UTF8.GetBytes(newContent));
+    streamIO.Write(data);
 
     // Assert
-    stream.ShouldNotBeNull();
-    stream.CanWrite.ShouldBeTrue();
+    File.ReadAllText(filePath).ShouldBe(newContent);
   }
 
   [Fact]
-  public void Write_NonExistingDirectory_CreatesDirectoryAndReturnsStream()
+  public void Write_NonExistingDirectory_CreatesDirectoryAndWritesContent()
   {
     // Arrange
     var subdirectory = Path.Combine(_testDirectory, "subdir1", "subdir2");
     var filePath = Path.Combine(subdirectory, _testFileName);
     var streamIO = new FileStreamIO(filePath);
+    var expectedContent = "directory creation test";
 
     // Act
-    using var stream = streamIO.Write();
+    using var data = new MemoryStream(Encoding.UTF8.GetBytes(expectedContent));
+    streamIO.Write(data);
 
     // Assert
-    stream.ShouldNotBeNull();
-    stream.CanWrite.ShouldBeTrue();
     Directory.Exists(subdirectory).ShouldBeTrue();
+    File.ReadAllText(filePath).ShouldBe(expectedContent);
   }
 
   [Fact]
-  public void Write_AllowsWritingContent()
+  public void Write_WhenCopyFails_OriginalFileIsPreserved()
+  {
+    // Arrange
+    var filePath = GetTestFilePath();
+    File.WriteAllText(filePath, "original content");
+    var streamIO = new FileStreamIO(filePath);
+
+    // Act
+    Should.Throw<IOException>(() => streamIO.Write(new ThrowingStream()));
+
+    // Assert
+    File.ReadAllText(filePath).ShouldBe("original content");
+  }
+
+  [Fact]
+  public void Write_WhenCopyFails_NoTempFileIsLeft()
   {
     // Arrange
     var filePath = GetTestFilePath();
     var streamIO = new FileStreamIO(filePath);
-    var testContent = "test write content";
 
     // Act
-    using (var stream = streamIO.Write())
-    using (var writer = new StreamWriter(stream))
-    {
-      writer.Write(testContent);
-    }
+    Should.Throw<IOException>(() => streamIO.Write(new ThrowingStream()));
 
     // Assert
-    var actualContent = File.ReadAllText(filePath);
-    actualContent.ShouldBe(testContent);
+    Directory.GetFiles(_testDirectory).ShouldBeEmpty();
+  }
+
+  private sealed class ThrowingStream : Stream
+  {
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position
+    {
+      get => throw new NotSupportedException();
+      set => throw new NotSupportedException();
+    }
+    public override void Flush() { }
+    public override int Read(byte[] buffer, int offset, int count) => throw new IOException("Simulated read failure");
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
   }
 
   [Fact]

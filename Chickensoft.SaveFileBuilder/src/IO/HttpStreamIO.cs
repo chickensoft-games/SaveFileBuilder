@@ -197,11 +197,11 @@ public class HttpStreamIO : IAsyncStreamIO, IDisposable
   }
 
   /// <inheritdoc />
-  public async Task WriteAsync(Stream stream, CancellationToken cancellationToken = default)
+  public async Task WriteAsync(Stream data, CancellationToken cancellationToken = default)
   {
-    using var content = new StreamContent(stream)
+    using var content = new StreamContent(data)
     {
-      Headers = { ContentLength = WriteHeaders.ContentLength ?? stream.Length }
+      Headers = { ContentLength = WriteHeaders.ContentLength ?? data.Length }
     };
     foreach (var header in WriteHeaders)
     {

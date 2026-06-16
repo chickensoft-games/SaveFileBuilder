@@ -27,11 +27,29 @@ public class FileStreamIO : IStreamIO
   public Stream Read() => FileInfo.Open(FileMode.Open, FileAccess.Read);
 
   /// <inheritdoc />
-  public Stream Write()
+  public void Write(Stream data)
   {
     var directoryName = GetDirectoryNameOrThrowIfNull();
     Directory.CreateDirectory(directoryName);
-    return FileInfo.Open(FileMode.OpenOrCreate, FileAccess.Write);
+    var tempPath = Path.Combine(directoryName, Path.GetRandomFileName());
+    try
+    {
+      using (var tempStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+      {
+        data.CopyTo(tempStream);
+      }
+#if NET5_0_OR_GREATER
+      File.Move(tempPath, FileInfo.FullName, overwrite: true);
+#else
+      File.Delete(FileInfo.FullName);
+      File.Move(tempPath, FileInfo.FullName);
+#endif
+    }
+    catch
+    {
+      File.Delete(tempPath);
+      throw;
+    }
   }
 
   // Note: Testing the DirectoryName is null scenario is not feasible because:

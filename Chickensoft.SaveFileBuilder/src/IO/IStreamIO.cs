@@ -4,16 +4,16 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-/// <summary>Provides a read- and write <see cref="Stream"/> from an input / output source.</summary>
+/// <summary>Provides reading, writing, and management of an input / output source.</summary>
 public interface IStreamIO
 {
   /// <summary>Returns a read-only <see cref="Stream"/> from the io source.</summary>
   /// <returns>A new read-only <see cref="Stream"/> object from the io source.</returns>
   Stream Read();
 
-  /// <summary>Returns a write-only <see cref="Stream"/> from the io source.</summary>
-  /// <returns>A new write-only <see cref="Stream"/> object from the io source.</returns>
-  Stream Write();
+  /// <summary>Writes all data from <paramref name="data"/> to the io source. The destination is only replaced when the write completes successfully; if an error occurs, the destination is left unchanged.</summary>
+  /// <param name="data">The complete stream of data to write to the io source.</param>
+  void Write(Stream data);
 
   /// <summary>Determines whether the io source exists.</summary>
   /// <returns><see langword="true"/> if the io source exists; otherwise, <see langword="false"/>.</returns>
@@ -31,11 +31,11 @@ public interface IAsyncStreamIO
   /// <returns>A task that represents the asynchronous read operation. The value of the task is a read-only <see cref="Stream"/> from the io source.</returns>
   Task<Stream> ReadAsync(CancellationToken cancellationToken = default);
 
-  /// <summary>Requests a write stream to write data to the underlying source asynchronously.</summary>
-  /// <param name="stream">The stream to write to the io source.</param>
+  /// <summary>Writes all data from <paramref name="data"/> to the io source asynchronously. The destination is only replaced when the write completes successfully; if an error occurs, the destination is left unchanged.</summary>
+  /// <param name="data">The complete stream of data to write to the io source.</param>
   /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous write operation.</param>
   /// <returns>A task that represents the asynchronous write operation.</returns>
-  Task WriteAsync(Stream stream, CancellationToken cancellationToken = default);
+  Task WriteAsync(Stream data, CancellationToken cancellationToken = default);
 
   /// <summary>Asynchronously determines whether the io source exists.</summary>
   /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous exists operation.</param>

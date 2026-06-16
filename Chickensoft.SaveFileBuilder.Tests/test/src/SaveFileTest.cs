@@ -29,12 +29,11 @@ public class SaveFileTest
   public void Save_WritesCompressesAndSerializes()
   {
     // Arrange
-    var io = new MemoryStream();
     var compressionStream = new MemoryStream();
 
-    MockIO.Setup(io => io.Write()).Returns(io).Verifiable();
-    MockCompressor.Setup(compressor => compressor.Compress(io, default, false)).Returns(compressionStream).Verifiable();
+    MockCompressor.Setup(compressor => compressor.Compress(It.IsAny<MemoryStream>(), default, true)).Returns(compressionStream).Verifiable();
     MockSerializer.Setup(serializer => serializer.Serialize(compressionStream, "test", typeof(string))).Verifiable();
+    MockIO.Setup(io => io.Write(It.IsAny<MemoryStream>())).Verifiable();
 
     // Act
     SaveFile.Save("test");
@@ -51,9 +50,8 @@ public class SaveFileTest
     // Arrange
     SaveFile = new SaveFile(MockIO.Object, MockSerializer.Object, null);
 
-    var ioStream = new MemoryStream();
-    MockIO.Setup(io => io.Write()).Returns(ioStream).Verifiable();
-    MockSerializer.Setup(serializer => serializer.Serialize(ioStream, "test", typeof(string))).Verifiable();
+    MockSerializer.Setup(serializer => serializer.Serialize(It.IsAny<MemoryStream>(), "test", typeof(string))).Verifiable();
+    MockIO.Setup(io => io.Write(It.IsAny<MemoryStream>())).Verifiable();
 
     // Act
     SaveFile.Save("test");
@@ -67,7 +65,7 @@ public class SaveFileTest
   public void Save_CompressionLevel_UsedByCompressor()
   {
     // Arrange
-    MockCompressor.Setup(compressor => compressor.Compress(It.IsAny<Stream>(), CompressionLevel.Fastest, false)).Verifiable();
+    MockCompressor.Setup(compressor => compressor.Compress(It.IsAny<MemoryStream>(), CompressionLevel.Fastest, true)).Verifiable();
 
     // Act
     SaveFile.Save("test", CompressionLevel.Fastest);
@@ -191,5 +189,55 @@ public class SaveFileTest
   {
     var task = SaveFile.DeleteAsync(TestContext.Current.CancellationToken);
     task.IsCompletedSuccessfully.ShouldBeTrue();
+  }
+
+  [Fact]
+  public void Save_WhenSerializationFails_WriteIsNeverCalled()
+  {
+    // Arrange
+    MockSerializer.Setup(serializer => serializer.Serialize(It.IsAny<Stream>(), It.IsAny<object>(), It.IsAny<Type>()))
+      .Throws<InvalidOperationException>();
+
+    // Act
+    Should.Throw<InvalidOperationException>(() => SaveFile.Save("test"));
+
+    // Assert
+    MockIO.Verify(io => io.Write(It.IsAny<Stream>()), Times.Never);
+  }
+
+  [Fact]
+  public void Save_WritesBufferedDataToIO()
+  {
+    // Arrange
+    var expectedBytes = System.Text.Encoding.UTF8.GetBytes("test-data");
+    MockSerializer.Setup(serializer => serializer.Serialize(It.IsAny<MemoryStream>(), "test", typeof(string)))
+      .Callback<Stream, object?, Type>((stream, _, _) => stream.Write(expectedBytes, 0, expectedBytes.Length));
+
+    byte[]? capturedBytes = null;
+    MockIO.Setup(io => io.Write(It.IsAny<MemoryStream>()))
+      .Callback<Stream>(s => capturedBytes = ((MemoryStream)s).ToArray());
+
+    // Act
+    SaveFile.Save("test");
+
+    // Assert
+    capturedBytes.ShouldNotBeNull();
+    capturedBytes.ShouldBe(expectedBytes);
+  }
+
+  [Fact]
+  public async Task SaveAsync_WhenSerializationFails_WriteIsNeverCalled()
+  {
+    // Arrange
+    MockSerializer.Setup(serializer => serializer.Serialize(It.IsAny<Stream>(), It.IsAny<object>(), It.IsAny<Type>()))
+      .Throws<InvalidOperationException>();
+
+    // Act
+    await Should.ThrowAsync<InvalidOperationException>(
+      () => SaveFile.SaveAsync("test", cancellationToken: TestContext.Current.CancellationToken).AsTask()
+    );
+
+    // Assert
+    MockIO.Verify(io => io.Write(It.IsAny<Stream>()), Times.Never);
   }
 }

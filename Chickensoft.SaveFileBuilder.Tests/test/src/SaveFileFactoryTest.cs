@@ -197,17 +197,23 @@ public partial class SaveFileFactoryTest : IDisposable
     var mockIO = new Mock<IStreamIO>();
     var options = new JsonSerializerOptions { WriteIndented = true };
     var testData = new TestData { Name = "Test", Value = 123 };
-    var mockStream = new MockStream();
-    mockIO.Setup(io => io.Write()).Returns(mockStream);
+    MemoryStream? capturedData = null;
+    mockIO
+      .Setup(io => io.Write(It.IsAny<Stream>()))
+      .Callback<Stream>(d =>
+      {
+        capturedData = new MemoryStream();
+        d.CopyTo(capturedData);
+        capturedData.Seek(0, SeekOrigin.Begin);
+      });
 
     // Act
     var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, options);
     saveFile.Save(testData);
 
-    mockStream.Seek(0, SeekOrigin.Begin);
-    using var gzipStream = new GZipStream(mockStream, CompressionMode.Decompress);
+    capturedData.ShouldNotBeNull();
+    using var gzipStream = new GZipStream(capturedData, CompressionMode.Decompress);
     var data = JsonSerializer.Deserialize<TestData>(gzipStream, options);
-    mockStream.DisposeForReal();
 
     // Assert
     data.ShouldNotBeNull();
@@ -247,17 +253,23 @@ public partial class SaveFileFactoryTest : IDisposable
     var mockIO = new Mock<IStreamIO>();
     var context = TestJsonContext.Default;
     var testData = new TestData { Name = "Test", Value = 123 };
-    var mockStream = new MockStream();
-    mockIO.Setup(io => io.Write()).Returns(mockStream);
+    MemoryStream? capturedData = null;
+    mockIO
+      .Setup(io => io.Write(It.IsAny<Stream>()))
+      .Callback<Stream>(d =>
+      {
+        capturedData = new MemoryStream();
+        d.CopyTo(capturedData);
+        capturedData.Seek(0, SeekOrigin.Begin);
+      });
 
     // Act
     var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, context);
     saveFile.Save(testData);
 
-    mockStream.Seek(0, SeekOrigin.Begin);
-    using var gzipStream = new GZipStream(mockStream, CompressionMode.Decompress);
+    capturedData.ShouldNotBeNull();
+    using var gzipStream = new GZipStream(capturedData, CompressionMode.Decompress);
     var data = JsonSerializer.Deserialize(gzipStream, typeof(TestData), context) as TestData;
-    mockStream.DisposeForReal();
 
     // Assert
     data.ShouldNotBeNull();
@@ -297,17 +309,23 @@ public partial class SaveFileFactoryTest : IDisposable
     var mockIO = new Mock<IStreamIO>();
     var typeInfo = TestJsonContext.Default.TestData;
     var testData = new TestData { Name = "Test", Value = 123 };
-    var mockStream = new MockStream();
-    mockIO.Setup(io => io.Write()).Returns(mockStream);
+    MemoryStream? capturedData = null;
+    mockIO
+      .Setup(io => io.Write(It.IsAny<Stream>()))
+      .Callback<Stream>(d =>
+      {
+        capturedData = new MemoryStream();
+        d.CopyTo(capturedData);
+        capturedData.Seek(0, SeekOrigin.Begin);
+      });
 
     // Act
     var saveFile = SaveFile.CreateGZipJsonIO(mockIO.Object, typeInfo);
     saveFile.Save(testData);
 
-    mockStream.Seek(0, SeekOrigin.Begin);
-    using var gzipStream = new GZipStream(mockStream, CompressionMode.Decompress);
+    capturedData.ShouldNotBeNull();
+    using var gzipStream = new GZipStream(capturedData, CompressionMode.Decompress);
     var data = JsonSerializer.Deserialize(gzipStream, typeInfo);
-    mockStream.DisposeForReal();
 
     // Assert
     data.ShouldNotBeNull();
