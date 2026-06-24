@@ -55,7 +55,7 @@ jobs:
         id: next-version
         with:
           project-version: ${{ steps.current-version.outputs.tag }}
-          godot-version: global.json
+          godot-version: 1.0.0
           bump: ${{ inputs.bump }}
 
       - uses: actions/setup-dotnet@v5
