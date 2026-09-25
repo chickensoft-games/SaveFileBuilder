@@ -33,7 +33,7 @@
     <PackageReference Include="xunit.v3" Version="4.0.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
     <!-- Mocking -->
-    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Moq" Version="4.21.0" />
     <!-- Assertions -->
     <PackageReference Include="Shouldly" Version="4.3.0" />
   </ItemGroup>
